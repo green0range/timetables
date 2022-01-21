@@ -1,0 +1,51 @@
+{
+  "Balclutha": {
+    "connections": [
+      ["", 60.96718472112341]
+    ],
+    "location": [-46.2417, 169.7333],
+    "population": "4060\n"
+  },
+  "Milton": {
+    "connections": [
+      ["Balclutha", 63.446873981966654]
+    ],
+    "location": [-46.1167, 169.967],
+    "population": "110128\n"
+  },
+  "Mosgiel": {
+    "connections": [
+      ["Milton", 93.6450586280146]
+    ],
+    "location": [-45.875, 170.348],
+    "population": "14700\n"
+  },
+  "Dunedin": {
+    "connections": [
+      ["Mosgiel", 30.010144703538003]
+    ],
+    "location": [-45.8667, 170.5],
+    "population": "128800\n"
+  },
+  "Waikouaiti": {
+    "connections": [
+      ["Dunedin", 413.034380232373]
+    ],
+    "location": [-45.5948, 170.6728],
+    "population": "1191\n"
+  },
+  "Palmerston": {
+    "connections": [
+      ["Waikouaiti", 45.98802575030459]
+    ],
+    "location": [-45.484, 170.7153],
+    "population": "795\n"
+  },
+  "\u014camaru": {
+    "connections": [
+      ["Palmerston", 619.4299907207949]
+    ],
+    "location": [-45.0990537, 170.9682558],
+    "population": "13050\n"
+  }
+}

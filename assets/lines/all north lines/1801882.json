@@ -1,0 +1,51 @@
+{
+  "Wellington": {
+    "connections": [
+      ["", 0.04338266076580107]
+    ],
+    "location": [-41.2782914, 174.7793471],
+    "population": "212700\n"
+  },
+  "Lower Hutt": {
+    "connections": [
+      ["Wellington", 7.462053074867356]
+    ],
+    "location": [-41.2246592, 174.9073286],
+    "population": "104700\n"
+  },
+  "Upper Hutt": {
+    "connections": [
+      ["Lower Hutt", 23.094616632161273]
+    ],
+    "location": [-41.1266425, 175.0685629],
+    "population": "46000\n"
+  },
+  "Carterton": {
+    "connections": [
+      ["Upper Hutt", 58.29290823513733]
+    ],
+    "location": [-41.0215425, 175.523094],
+    "population": "9690\n"
+  },
+  "Masterton": {
+    "connections": [
+      ["Carterton", 38.86255757463182]
+    ],
+    "location": [-40.947922, 175.6398606],
+    "population": "26800\n"
+  },
+  "Eket\u0101huna": {
+    "connections": [
+      ["Masterton", 234.99911300025144]
+    ],
+    "location": [-40.6454637, 175.7047026],
+    "population": "1630\n"
+  },
+  "Pah\u012batua": {
+    "connections": [
+      ["Eket\u0101huna", 169.88815104857548]
+    ],
+    "location": [-40.456044, 175.8342747],
+    "population": "2820\n"
+  }
+}

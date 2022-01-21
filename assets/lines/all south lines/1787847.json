@@ -1,0 +1,30 @@
+{
+  "Rangiora": {
+    "connections": [
+      ["", 0.2743196648292323]
+    ],
+    "location": [-43.3021063, 172.5953314],
+    "population": "19250\n"
+  },
+  "Christchurch": {
+    "connections": [
+      ["Rangiora", 47.79244733267815]
+    ],
+    "location": [-43.5309, 172.6365],
+    "population": "381500\n"
+  },
+  "Amberley": {
+    "connections": [
+      ["Christchurch", 388.5965081192597]
+    ],
+    "location": [-43.1556, 172.7306],
+    "population": "1800\n"
+  },
+  "Waipara": {
+    "connections": [
+      ["Amberley", 27.039509754453945]
+    ],
+    "location": [-43.056, 172.759],
+    "population": "312\n"
+  }
+}

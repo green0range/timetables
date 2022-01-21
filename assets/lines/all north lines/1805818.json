@@ -1,0 +1,51 @@
+{
+  "Woodville": {
+    "connections": [
+      ["", 5.312718687887662]
+    ],
+    "location": [-40.3436697, 175.8675113],
+    "population": "1620\n"
+  },
+  "Dannevirke": {
+    "connections": [
+      ["Woodville", 47.550960529357624]
+    ],
+    "location": [-40.2090025, 176.0945995],
+    "population": "5700\n"
+  },
+  "Ormondville": {
+    "connections": [
+      ["Dannevirke", 29.332115560675852]
+    ],
+    "location": [-40.1102468, 176.2640721],
+    "population": "69\n"
+  },
+  "Waipukurau": {
+    "connections": [
+      ["Ormondville", 33.582378374682975]
+    ],
+    "location": [-39.993653, 176.5517351],
+    "population": "4670\n"
+  },
+  "Napier": {
+    "connections": [
+      ["Waipukurau", 580.9806541478449]
+    ],
+    "location": [-39.494387, 176.906592],
+    "population": "65000\n"
+  },
+  "Wairoa": {
+    "connections": [
+      ["Napier", 571.6762869077562]
+    ],
+    "location": [-39.024207, 177.419863],
+    "population": "8680\n"
+  },
+  "N\u016bhaka": {
+    "connections": [
+      ["Wairoa", 35.72240566122855]
+    ],
+    "location": [-39.046676, 177.739924],
+    "population": "258\n"
+  }
+}

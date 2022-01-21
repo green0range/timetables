@@ -1,0 +1,44 @@
+{
+  "Te K\u016biti": {
+    "connections": [
+      ["", 255.29957093308215]
+    ],
+    "location": [-38.3333627, 175.1608241],
+    "population": "4720\n"
+  },
+  "Huntly": {
+    "connections": [
+      ["Te K\u016biti", 584.5962326990353]
+    ],
+    "location": [-37.5587999, 175.1575741],
+    "population": "8030\n"
+  },
+  "\u014ctorohunga": {
+    "connections": [
+      ["Huntly", 1689.2697173900142]
+    ],
+    "location": [-38.1877385, 175.2052473],
+    "population": "3027\n"
+  },
+  "Taumarunui": {
+    "connections": [
+      ["\u014ctorohunga", 1351.8354791788693]
+    ],
+    "location": [-38.8825901, 175.2638518],
+    "population": "5052\n"
+  },
+  "Hamilton": {
+    "connections": [
+      ["Taumarunui", 122.91183869292308]
+    ],
+    "location": [-37.7914273, 175.2584039],
+    "population": "165400\n"
+  },
+  "Te Awamutu": {
+    "connections": [
+      ["Hamilton", 3797.331316029669]
+    ],
+    "location": [-38.012081, 175.3229063],
+    "population": "13100\n"
+  }
+}

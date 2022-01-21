@@ -1,0 +1,16 @@
+{
+  "Put\u0101ruru": {
+    "connections": [
+      ["", 0.04052050418039617]
+    ],
+    "location": [-38.0534764, 175.7793498],
+    "population": "4280\n"
+  },
+  "Rotorua": {
+    "connections": [
+      ["Put\u0101ruru", 67.03764258816804]
+    ],
+    "location": [-38.12617, 176.235903],
+    "population": "77300\n"
+  }
+}

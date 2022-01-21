@@ -1,0 +1,44 @@
+{
+  "New Plymouth": {
+    "connections": [
+      ["", 0.7532664989977731]
+    ],
+    "location": [-39.0581687, 174.0676064],
+    "population": "87300\n"
+  },
+  "Inglewood": {
+    "connections": [
+      ["New Plymouth", 49.00501951350077]
+    ],
+    "location": [-39.156901, 174.207864],
+    "population": "3640\n"
+  },
+  "Eltham": {
+    "connections": [
+      ["Inglewood", 166.7480996597434]
+    ],
+    "location": [-39.4286137, 174.2929181],
+    "population": "1970\n"
+  },
+  "Stratford": {
+    "connections": [
+      ["Eltham", 34.175962768259524]
+    ],
+    "location": [-39.3452711, 174.2842237],
+    "population": "9880\n"
+  },
+  "H\u0101wera": {
+    "connections": [
+      ["Stratford", 79.30792756717054]
+    ],
+    "location": [-39.5843966, 174.281514],
+    "population": "9810\n"
+  },
+  "P\u0101tea": {
+    "connections": [
+      ["H\u0101wera", 853.748448570328]
+    ],
+    "location": [-39.7579841, 174.4847005],
+    "population": "1191\n"
+  }
+}

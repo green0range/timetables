@@ -1,0 +1,37 @@
+{
+  "Ahaura": {
+    "connections": [
+      ["", 10.341990061276562]
+    ],
+    "location": [-42.3654735, 171.4200401],
+    "population": "96\n"
+  },
+  "Ikamatua": {
+    "connections": [
+      ["Ahaura", 58.83596285864168]
+    ],
+    "location": [-42.2757625, 171.674374],
+    "population": "200\n"
+  },
+  "Westport": {
+    "connections": [
+      ["Ikamatua", 83.84120354676439]
+    ],
+    "location": [-41.755, 171.599],
+    "population": "4660\n"
+  },
+  "\u012anangahue": {
+    "connections": [
+      ["Westport", 40.936105200628305]
+    ],
+    "location": [-41.8636775, 171.9348608],
+    "population": "144\n"
+  },
+  "Reefton": {
+    "connections": [
+      ["\u012anangahue", 1272.5690111459694]
+    ],
+    "location": [-42.1167, 171.867],
+    "population": "927\n"
+  }
+}

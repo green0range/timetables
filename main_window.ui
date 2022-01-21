@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>867</width>
+    <height>769</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>TIMETABLES</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QFrame" name="frm_map">
+      <property name="minimumSize">
+       <size>
+        <width>100</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="frm_control">
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QFrame" name="frame_2">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>TIMETABLES</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_new_route">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>New Route</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_pause">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Pause</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_toggle_speed">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Fast</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <property name="default">
+             <bool>false</bool>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_skip_year">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Skip to 2021</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_exit">
+            <property name="text">
+             <string>Save + Exit</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QFrame" name="frm_new_route">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="gridLayout">
+             <item row="4" column="0" colspan="3">
+              <widget class="QGroupBox" name="groupBox_2">
+               <property name="title">
+                <string>Train Configuration</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_4">
+                <item row="1" column="4">
+                 <widget class="QSpinBox" name="sb_baggage"/>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="lbl_passenger_car">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Passenger Cars&lt;/span&gt; contain seating for passengers. They can carry up to 50 passengers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Passenger Carriage</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QSpinBox" name="sb_sleeper_car"/>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="dsb_seat_fare">
+                  <property name="maximum">
+                   <double>999.899999999999977</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>10.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QSpinBox" name="sb_engines">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>2</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QSpinBox" name="sb_open_air"/>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QSpinBox" name="sb_passenger_car"/>
+                </item>
+                <item row="0" column="4">
+                 <widget class="QLabel" name="lbl_baggage">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Baggage cars&lt;/span&gt; carry your passenger's baggage. They are not required but if they are not used, passenger will only be able to take a carry on bag, which some potential passengers may find off-putting.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Baggage Car</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lbl_engine">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Engines&lt;/span&gt; do the machinal work of pulling your train. Engines can pull up to &lt;span style=&quot; font-weight:600;&quot;&gt;10 cars&lt;/span&gt; (of any type.) They &lt;span style=&quot; font-weight:600;&quot;&gt;cost $X each up front + $Y/yr of maintaince&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;cannot carry passengers&lt;/span&gt;. At least 1 engine is require, or your train can't go anywhere.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Engines</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_15">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What price will you charge for the service? The price you set will be charged to anyone going between the first and last stations. If passengers go to other stations, the price they pay will be scaled based on how many stations they travel past before disembarking.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Fare Charge $NZ:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QLabel" name="lbl_open_air">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Open-air viewing decks&lt;/span&gt; are popular attractions on tourist trains. Passengers are able to leave their seat and enjoy the scenary. &lt;span style=&quot; font-weight:600;&quot;&gt;They do not provide any extra capacity&lt;/span&gt; as all passengers must also have a seat (or bed), but will attract tourists to your train, who are generally willing to pay a higher ticket price. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Open-Air  Deck</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QDoubleSpinBox" name="dsb_sleeper_fare">
+                  <property name="maximum">
+                   <double>999.899999999999977</double>
+                  </property>
+                  <property name="value">
+                   <double>100.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="lbl_sleeper">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Sleeper Cars&lt;/span&gt; are divided into small rooms with beds for passengers to sleep on. They are especially popular to long-distance over-night trips, were staying in a seat too long would be unconfortable. Each car can carry &lt;span style=&quot; font-weight:600;&quot;&gt;16 sleeping passengers.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Sleeper Cars</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="6" column="0" colspan="3">
+              <widget class="QLabel" name="lbl_feedback_2">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Expected Revenue at 70% full is $A, giving an expected profit (per journey) of $B before tax.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0">
+              <widget class="QPushButton" name="btn_cancel">
+               <property name="text">
+                <string>Cancel</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0" colspan="3">
+              <widget class="QLabel" name="lbl_feedback_1">
+               <property name="text">
+                <string>This train will be able to carry a maximum of X passengers, cost $Y to build and $Z/journey to run</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>From:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QComboBox" name="cmb_from"/>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>To:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="3">
+              <widget class="QGroupBox" name="frm_intermediate_stops">
+               <property name="title">
+                <string>Intermediate Stops:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="cmb_to"/>
+             </item>
+             <item row="7" column="2">
+              <widget class="QPushButton" name="btn_confirm">
+               <property name="text">
+                <string>Confirm Route</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QCheckBox" name="ckb_return">
+               <property name="text">
+                <string>Returns?</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="3">
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string>Schedule</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <item row="2" column="0" colspan="2">
+                 <widget class="QCheckBox" name="ckb_run_every_x_hour">
+                  <property name="text">
+                   <string>And, depart every</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="6" colspan="2">
+                 <widget class="QLabel" name="lbl_return_time">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Return Time</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" colspan="3">
+                 <widget class="QTimeEdit" name="departure_time_edit">
+                  <property name="displayFormat">
+                   <string>H:mm</string>
+                  </property>
+                  <property name="time">
+                   <time>
+                    <hour>7</hour>
+                    <minute>0</minute>
+                    <second>0</second>
+                   </time>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QDoubleSpinBox" name="dbl_run_every_x_hour">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="minimum">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>12.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" colspan="3">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>Departure Time:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4" colspan="2">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>Arrival Time:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="4" colspan="2">
+                 <widget class="QLCDNumber" name="lcd_arrival_time"/>
+                </item>
+                <item row="1" column="6" colspan="2">
+                 <widget class="QLCDNumber" name="lcd_return_time">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0" colspan="8">
+                 <widget class="QFrame" name="frame_3">
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                  <layout class="QGridLayout" name="gridLayout_3">
+                   <item row="0" column="0">
+                    <widget class="QCheckBox" name="ckb_mon">
+                     <property name="text">
+                      <string>M</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QCheckBox" name="ckb_tue">
+                     <property name="text">
+                      <string>T</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="5">
+                    <widget class="QCheckBox" name="ckb_sat">
+                     <property name="text">
+                      <string>S</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QCheckBox" name="ckb_wed">
+                     <property name="text">
+                      <string>W</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QCheckBox" name="ckb_thu">
+                     <property name="text">
+                      <string>T</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="4">
+                    <widget class="QCheckBox" name="ckb_fri">
+                     <property name="text">
+                      <string>F</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="6">
+                    <widget class="QCheckBox" name="ckb_sun">
+                     <property name="text">
+                      <string>S</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item row="3" column="0" colspan="8">
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>Run this service on the days of:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3" colspan="5">
+                 <widget class="QLabel" name="label_14">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Periodic trains are reset at midnight. If the next running time is later than 00:00, then train only run from the first departure time set for the next morning. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>hour(s) thereafter</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="7" column="1">
+              <widget class="QLineEdit" name="txt_service_name">
+               <property name="placeholderText">
+                <string>Name of route</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QScrollArea" name="scr_route_select">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrl_routes">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>701</width>
+               <height>79</height>
+              </rect>
+             </property>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frame_4">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="0" column="2">
+           <widget class="QPushButton" name="btn_bounding_n">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Te-Ika-A-Māui</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="btn_bounding_nz">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Aotearoa</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QPushButton" name="btn_bounding_s">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Te Waipounau</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Viewing area:</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>ckb_return</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lbl_return_time</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>770</x>
+     <y>125</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>770</x>
+     <y>227</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ckb_return</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lcd_return_time</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>770</x>
+     <y>125</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>770</x>
+     <y>254</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ckb_run_every_x_hour</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dbl_run_every_x_hour</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>475</x>
+     <y>317</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>584</x>
+     <y>317</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

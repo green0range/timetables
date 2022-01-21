@@ -1,0 +1,624 @@
+{
+  "Wellington": {
+    "connections": [
+      ["", 0.11833747540964638]
+    ],
+    "location": [-41.2782914, 174.7793471],
+    "population": "212700\n"
+  },
+  "Porirua": {
+    "connections": [
+      ["Wellington", 39.03913344658838]
+    ],
+    "location": [-41.1117281, 174.828878],
+    "population": "56559\n"
+  },
+  "Lower Hutt": {
+    "connections": [
+      ["Wellington", 7.462053074867356]
+    ],
+    "location": [-41.2246592, 174.9073286],
+    "population": "104700\n"
+  },
+  "Upper Hutt": {
+    "connections": [
+      ["Lower Hutt", 23.094616632161273]
+    ],
+    "location": [-41.1266425, 175.0685629],
+    "population": "46000\n"
+  },
+  "Carterton": {
+    "connections": [
+      ["Upper Hutt", 58.29290823513733]
+    ],
+    "location": [-41.0215425, 175.523094],
+    "population": "9690\n"
+  },
+  "Masterton": {
+    "connections": [
+      ["Carterton", 38.86255757463182]
+    ],
+    "location": [-40.947922, 175.6398606],
+    "population": "26800\n"
+  },
+  "Eket\u0101huna": {
+    "connections": [
+      ["Masterton", 234.99911300025144]
+    ],
+    "location": [-40.6454637, 175.7047026],
+    "population": "1630\n"
+  },
+  "Pah\u012batua": {
+    "connections": [
+      ["Eket\u0101huna", 169.88815104857548]
+    ],
+    "location": [-40.456044, 175.8342747],
+    "population": "2820\n"
+  },
+  "Woodville": {
+    "connections": [
+      ["Pah\u012batua", 5.312718687887662],
+      ["Palmerston North", 100]
+    ],
+    "location": [-40.3436697, 175.8675113],
+    "population": "1620\n"
+  },
+  "Dannevirke": {
+    "connections": [
+      ["Woodville", 47.550960529357624]
+    ],
+    "location": [-40.2090025, 176.0945995],
+    "population": "5700\n"
+  },
+  "Ormondville": {
+    "connections": [
+      ["Dannevirke", 29.332115560675852]
+    ],
+    "location": [-40.1102468, 176.2640721],
+    "population": "69\n"
+  },
+  "Waipukurau": {
+    "connections": [
+      ["Ormondville", 33.582378374682975]
+    ],
+    "location": [-39.993653, 176.5517351],
+    "population": "4670\n"
+  },
+  "Hastings": {
+    "connections": [
+      ["Waipukurau", 580.9806541478449]
+    ],
+    "location": [-39.494387, 176.906592],
+    "population": "65000\n"
+  },
+  "Napier": {
+    "connections": [
+      ["Hastings", 580.9806541478449]
+    ],
+    "location": [-39.394387, 176.906592],
+    "population": "88000"
+  },
+  "Wairoa": {
+    "connections": [
+      ["Napier", 571.6762869077562]
+    ],
+    "location": [-39.024207, 177.419863],
+    "population": "8680\n"
+  },
+  "N\u016bhaka": {
+    "connections": [
+      ["Wairoa", 35.72240566122855]
+    ],
+    "location": [-39.046676, 177.739924],
+    "population": "258\n"
+  },
+  "Gisbourne": {
+    "connections": [
+      ["N\u016bhaka", 35.72240566122855]
+    ],
+    "location": [-38.6707596,178.0152663],
+    "population": "37000\n"
+  },
+  "Paraparaumu": {
+    "connections": [
+      ["Porirua", 73.34701368498602]
+    ],
+    "location": [-40.9160611, 175.0025552],
+    "population": "29700\n"
+  },
+  "\u014ctaki": {
+    "connections": [
+      ["Paraparaumu", 32.44972520002659]
+    ],
+    "location": [-40.7610578, 175.1557713],
+    "population": "3489\n"
+  },
+  "Levin": {
+    "connections": [
+      ["\u014ctaki", 38.6959111594343]
+    ],
+    "location": [-40.6312803, 175.2742669],
+    "population": "18800\n"
+  },
+  "Shannon": {
+    "connections": [
+      ["Levin", 2168.868461711343]
+    ],
+    "location": [-40.5477681, 175.4065996],
+    "population": "1506\n"
+  },
+  "Palmerston North": {
+    "connections": [
+      ["Shannon", 5549.647043202549],
+      ["Whanganui", 100]
+    ],
+    "location": [-40.3464529, 175.59443],
+    "population": "88300\n"
+  },
+  "Taihape": {
+    "connections": [
+      ["Palmerston North", 928.2875757060174]
+    ],
+    "location": [-39.6791707, 175.7933581],
+    "population": "1790\n"
+  },
+  "Ohakune": {
+    "connections": [
+      ["Wai\u014duru", 426.1142821602898]
+    ],
+    "location": [-39.4041184, 175.4130115],
+    "population": "1150\n"
+  },
+  "National Park Village": {
+    "connections": [
+      ["Ohakune", 402.1284365718843]
+    ],
+    "location": [-39.1752457, 175.3897391],
+    "population": "174\n"
+  },
+  "Wai\u014duru": {
+    "connections": [
+      ["Taihape", 905.4848233688354]
+    ],
+    "location": [-39.4816247, 175.6608556],
+    "population": "765\n"
+  },
+  "Taumarunui": {
+    "connections": [
+      ["National Park Village", 1351.8354791788693],
+      ["The Republic of Whangamōmona",100]
+    ],
+    "location": [-38.8825901, 175.2638518],
+    "population": "5052\n"
+  },
+  "Te K\u016biti": {
+    "connections": [
+      ["Taumarunui", 255.29957093308215]
+    ],
+    "location": [-38.3333627, 175.1608241],
+    "population": "4720\n"
+  },
+  "Huntly": {
+    "connections": [
+      ["Hamilton", 584.5962326990353],
+      ["Auckland", 100]
+    ],
+    "location": [-37.5587999, 175.1575741],
+    "population": "8030\n"
+  },
+  "\u014ctorohunga": {
+    "connections": [
+      ["Te K\u016biti", 1689.2697173900142]
+    ],
+    "location": [-38.1877385, 175.2052473],
+    "population": "3027\n"
+  },
+  "Hamilton": {
+    "connections": [
+      ["Te Awamutu", 122.91183869292308]
+    ],
+    "location": [-37.7914273, 175.2584039],
+    "population": "165400\n"
+  },
+  "Te Awamutu": {
+    "connections": [
+      ["\u014ctorohunga", 3797.331316029669]
+    ],
+    "location": [-38.012081, 175.3229063],
+    "population": "13100\n"
+  },
+  "Hikurangi": {
+    "connections": [
+      ["", 970.4559509163399]
+    ],
+    "location": [-35.5905617, 174.2768017],
+    "population": "1617\n"
+  },
+  "Whang\u0101rei": {
+    "connections": [
+      ["Hikurangi", 478.02931546052]
+    ],
+    "location": [-35.7318319, 174.3228183],
+    "population": "98300\n"
+  },
+  "Maungat\u016broto": {
+    "connections": [
+      ["Whang\u0101rei", 631.0296820528708]
+    ],
+    "location": [-36.1105166, 174.3512266],
+    "population": "1269\n"
+  },
+  "Helensville": {
+    "connections": [
+      ["Wellsford", 413.2426699764869]
+    ],
+    "location": [-36.6735173, 174.4470889],
+    "population": "2787\n"
+  },
+  "Wellsford": {
+    "connections": [
+      ["Maungat\u016broto", 583.173461117512]
+    ],
+    "location": [-36.2947585, 174.5232312],
+    "population": "1929\n"
+  },
+  "Auckland": {
+    "connections": [
+      ["Helensville", 2770.9688461146698]
+    ],
+    "location": [-36.8462286, 174.7660265],
+    "population": "1657000\n"
+  },
+  "Morrinsville": {
+    "connections": [
+      ["Hamilton", 25.10063524426077]
+    ],
+    "location": [-37.661649, 175.52342],
+    "population": "7000\n"
+  },
+  "Tauranga": {
+    "connections": [
+      ["Morrinsville", 67.42889211321713]
+    ],
+    "location": [-37.6847526, 176.1578513],
+    "population": "131500\n"
+  },
+  "Te Puke": {
+    "connections": [
+      ["Tauranga", 30.14001156156536]
+    ],
+    "location": [-37.781984, 176.321397],
+    "population": "8230\n"
+  },
+  "Cambridge": {
+    "connections": [
+      ["Hamilton", 10.64568362669556]
+    ],
+    "location": [-37.858423, 175.452107],
+    "population": "20500\n"
+  },
+  "Put\u0101ruru": {
+    "connections": [
+      ["Matamata", 0.04052050418039617]
+    ],
+    "location": [-38.0534764, 175.7793498],
+    "population": "4280\n"
+  },
+  "Rotorua": {
+    "connections": [
+      ["Put\u0101ruru", 67.03764258816804]
+    ],
+    "location": [-38.12617, 176.235903],
+    "population": "77300\n"
+  },
+  "Tokoroa": {
+    "connections": [
+      ["Put\u0101ruru", 97.75177717749978]
+    ],
+    "location": [-38.220544, 175.867403],
+    "population": "14300\n"
+  },
+  "Matamata": {
+    "connections": [
+      ["Morrinsville", 65.7234951372243]
+    ],
+    "location": [-37.810744, 175.771354],
+    "population": "8570\n"
+  },
+  
+  "New Plymouth": {
+    "connections": [
+      ["", 0.7532664989977731]
+    ],
+    "location": [-39.0581687, 174.0676064],
+    "population": "87300\n"
+  },
+  "Inglewood": {
+    "connections": [
+      ["New Plymouth", 49.00501951350077]
+    ],
+    "location": [-39.156901, 174.207864],
+    "population": "3640\n"
+  },
+  "Eltham": {
+    "connections": [
+      ["Stratford", 166.7480996597434]
+    ],
+    "location": [-39.4286137, 174.2929181],
+    "population": "1970\n"
+  },
+  "Stratford": {
+    "connections": [
+      ["Inglewood", 34.175962768259524]
+    ],
+    "location": [-39.3452711, 174.2842237],
+    "population": "9880\n"
+  },
+  "H\u0101wera": {
+    "connections": [
+      ["Eltham", 79.30792756717054]
+    ],
+    "location": [-39.5843966, 174.281514],
+    "population": "9810\n"
+  },
+  "P\u0101tea": {
+    "connections": [
+      ["H\u0101wera", 853.748448570328]
+    ],
+    "location": [-39.7579841, 174.4847005],
+    "population": "1191\n"
+  },
+  "Whanganui": {
+    "connections": [
+      ["P\u0101tea", 90.85994986793331]
+    ],
+    "location": [-39.905597, 175.054399],
+    "population": "47300\n"
+  },
+  "The Republic of Whangamōmona": {
+    "connections": [
+      ["Stratford", 90.85994986793331]
+    ],
+    "location": [-39.1140073,174.5607993],
+    "population": "126\n"
+  },
+  "Invercargill": {
+    "connections": [
+      ["", 0.28127615923882465]
+    ],
+    "location": [-46.429, 168.362],
+    "population": "57100"
+  },
+  "Edendale": {
+    "connections": [
+      ["Invercargill", 33.780671008826]
+    ],
+    "location": [-46.3167, 168.7833],
+    "population": "588"
+  },
+  "Gore": {
+    "connections": [
+      ["Edendale", 25.488576140932004]
+    ],
+    "location": [-46.1060314, 168.9387699],
+    "population": "12800"
+  },
+  "Balclutha": {
+    "connections": [
+      ["Gore", 60.96718472112341]
+    ],
+    "location": [-46.2417, 169.7333],
+    "population": "4060"
+  },
+  "Milton": {
+    "connections": [
+      ["Balclutha", 63.446873981966654]
+    ],
+    "location": [-46.1167, 169.967],
+    "population": "110128"
+  },
+  "Mosgiel": {
+    "connections": [
+      ["Milton", 93.6450586280146]
+    ],
+    "location": [-45.875, 170.348],
+    "population": "14700"
+  },
+  "Dunedin": {
+    "connections": [
+      ["Mosgiel", 30.010144703538003]
+    ],
+    "location": [-45.8667, 170.5],
+    "population": "128800"
+  },
+  "Waikouaiti": {
+    "connections": [
+      ["Dunedin", 72.2]
+    ],
+    "location": [-45.5948, 170.6728],
+    "population": "1191"
+  },
+  "Palmerston": {
+    "connections": [
+      ["Waikouaiti", 45.98802575030459]
+    ],
+    "location": [-45.484, 170.7153],
+    "population": "795"
+  },
+  "Ōamaru": {
+    "connections": [
+      ["Palmerston", 60.6]
+    ],
+    "location": [-45.0990537, 170.9682558],
+    "population": "13050"
+  },
+  "Timaru": {
+    "connections": [
+      ["Ōamaru", 87.6145212659828]
+    ],
+    "location": [-44.4, 171.25],
+    "population": "29000"
+  },
+  "Ashburton": {
+    "connections": [
+      ["Timaru", 75.5]
+    ],
+    "location": [-43.9041384, 171.7459328],
+    "population": "34800"
+  },
+  "Rolleston": {
+    "connections": [
+      ["Ashburton", 81.62556570853695],
+      ["Darfield", 26.786861248571228]
+    ],
+    "location": [-43.596, 172.383],
+    "population": "16350"
+  },
+  "Christchurch": {
+    "connections": [
+      ["Rolleston", 31.154840583375574]
+    ],
+    "location": [-43.5309, 172.6365],
+    "population": "381500"
+  },
+  "Rangiora": {
+    "connections": [
+      ["Christchurch", 47.79244733267815]
+    ],
+    "location": [-43.3021063, 172.5953314],
+    "population": "19250"
+  },
+  "Amberley": {
+    "connections": [
+      ["Rangiora", 25.8]
+    ],
+    "location": [-43.1556, 172.7306],
+    "population": "1800"
+  },
+  "Waipara": {
+    "connections": [
+      ["Amberley", 27.039509754453945]
+    ],
+    "location": [-43.056, 172.759],
+    "population": "312"
+  },
+  "Arthur's Pass Village": {
+    "connections": [
+      ["Ōtira", 8.904153426850826]
+    ],
+    "location": [-42.9438295, 171.5629254],
+    "population": "48"
+  },
+  "Springfield": {
+    "connections": [
+      ["Arthur's Pass Village", 67.27427935498683]
+    ],
+    "location": [-43.3347, 171.9282],
+    "population": "318"
+  },
+  "Darfield": {
+    "connections": [
+      ["Springfield", 72.14571337006227]
+    ],
+    "location": [-43.488, 172.109],
+    "population": "2900"
+  },
+  "Greymouth": {
+    "connections": [
+      ["Ahaura", 35.0]
+    ],
+    "location": [-42.4667, 171.2],
+    "population": "14100"
+  },
+  "Moana": {
+    "connections": [
+      ["Greymouth", 72.34908067378824]
+    ],
+    "location": [-42.5791275, 171.4764224],
+    "population": "57"
+  },
+  "Ōtira": {
+    "connections": [
+      ["Moana", 283.7954133371792]
+    ],
+    "location": [-42.8305018, 171.5616639],
+    "population": "30"
+  },
+  "Kaikōura": {
+    "connections": [
+      ["Waipara", 123]
+    ],
+    "location": [-42.4, 173.6814],
+    "population": "2223"
+  },
+  "Blenheim": {
+    "connections": [
+      ["Seddon", 24.4]
+    ],
+    "location": [-41.5167, 173.95],
+    "population": "28200"
+  },
+  "Picton": {
+    "connections": [
+      ["Blenheim", 27.4]
+    ],
+    "location": [-41.2886785, 174.0050271],
+    "population": "4310"
+  },
+  "Seddon": {
+    "connections": [
+      ["Kaikōura", 104]
+    ],
+    "location": [-41.67, 174.0736],
+    "population": "552"
+  },
+  "Westport": {
+    "connections": [
+      ["", 83.84120354676439]
+    ],
+    "location": [-41.755, 171.599],
+    "population": "4660"
+  },
+  "Īnangahue": {
+    "connections": [
+      ["Westport", 40.936105200628305]
+    ],
+    "location": [-41.8636775, 171.9348608],
+    "population": "144"
+  },
+  "Reefton": {
+    "connections": [
+      ["Īnangahue", 35]
+    ],
+    "location": [-42.1167, 171.867],
+    "population": "927"
+  },
+  "Ahaura": {
+    "connections": [
+      ["Ikamatua", 10.341990061276562]
+    ],
+    "location": [-42.3654735, 171.4200401],
+    "population": "96"
+  },
+  "Ikamatua": {
+    "connections": [
+      ["Reefton", 58.83596285864168]
+    ],
+    "location": [-42.2757625, 171.674374],
+    "population": "200"
+  },
+  "Kūmara": {
+    "connections": [
+      ["Greymouth", 22.5]
+    ],
+    "location": [-42.6333,171.1830],
+    "population": "285"
+  },
+  "Hokitika": {
+    "connections": [
+      ["Kūmara", 28]
+    ],
+    "location": [-42.7167,170.9667],
+    "population": "2910"
+  }
+}

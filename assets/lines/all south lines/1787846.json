@@ -1,0 +1,30 @@
+{
+  "Timaru": {
+    "connections": [
+      ["", 87.6145212659828]
+    ],
+    "location": [-44.4, 171.25],
+    "population": "29000\n"
+  },
+  "Ashburton": {
+    "connections": [
+      ["Timaru", 207.11357014966822]
+    ],
+    "location": [-43.9041384, 171.7459328],
+    "population": "34800\n"
+  },
+  "Rolleston": {
+    "connections": [
+      ["Ashburton", 81.62556570853695]
+    ],
+    "location": [-43.596, 172.383],
+    "population": "16350\n"
+  },
+  "Christchurch": {
+    "connections": [
+      ["Rolleston", 31.154840583375574]
+    ],
+    "location": [-43.5309, 172.6365],
+    "population": "381500\n"
+  }
+}

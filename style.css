@@ -1,0 +1,64 @@
+QFrame#frm_service_panel0 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #24a0a7;
+}
+QFrame#frm_service_panel1 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #08c29d;
+}
+QFrame#frm_service_panel2 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #4ed07a;
+}
+QFrame#frm_service_panel3 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #eede78;
+}
+QFrame#frm_service_panel4 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #ee7878;
+}
+
+QFrame#frm_service_panel5 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #0d4946;
+}
+
+QFrame#frm_service_panel6 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #226c51;
+}
+
+QFrame#frm_service_panel7 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #ff914d;
+}
+
+QFrame#frm_service_panel8 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #aa3232;
+}
+QFrame#frm_service_panel9 {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 0px;
+    background-color: #6d6d6d;
+}

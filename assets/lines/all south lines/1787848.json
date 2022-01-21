@@ -1,0 +1,30 @@
+{
+  "Arthur's Pass Village": {
+    "connections": [
+      ["", 0.22199937104943307]
+    ],
+    "location": [-42.9438295, 171.5629254],
+    "population": "48\n"
+  },
+  "Springfield": {
+    "connections": [
+      ["Arthur's Pass Village", 67.27427935498683]
+    ],
+    "location": [-43.3347, 171.9282],
+    "population": "318\n"
+  },
+  "Darfield": {
+    "connections": [
+      ["Springfield", 72.14571337006227]
+    ],
+    "location": [-43.488, 172.109],
+    "population": "2900\n"
+  },
+  "Rolleston": {
+    "connections": [
+      ["Darfield", 26.786861248571228]
+    ],
+    "location": [-43.596, 172.383],
+    "population": "16350\n"
+  }
+}

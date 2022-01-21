@@ -1,0 +1,30 @@
+{
+  "Hamilton": {
+    "connections": [
+      ["", 0.10711436411881418]
+    ],
+    "location": [-37.7914273, 175.2584039],
+    "population": "165400\n"
+  },
+  "Morrinsville": {
+    "connections": [
+      ["Hamilton", 25.10063524426077]
+    ],
+    "location": [-37.661649, 175.52342],
+    "population": "7000\n"
+  },
+  "Tauranga": {
+    "connections": [
+      ["Morrinsville", 67.42889211321713]
+    ],
+    "location": [-37.6847526, 176.1578513],
+    "population": "131500\n"
+  },
+  "Te Puke": {
+    "connections": [
+      ["Tauranga", 30.14001156156536]
+    ],
+    "location": [-37.781984, 176.321397],
+    "population": "8230\n"
+  }
+}

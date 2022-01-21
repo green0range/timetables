@@ -1,0 +1,44 @@
+{
+  "Hikurangi": {
+    "connections": [
+      ["", 970.4559509163399]
+    ],
+    "location": [-35.5905617, 174.2768017],
+    "population": "1617\n"
+  },
+  "Whang\u0101rei": {
+    "connections": [
+      ["Hikurangi", 478.02931546052]
+    ],
+    "location": [-35.7318319, 174.3228183],
+    "population": "98300\n"
+  },
+  "Maungat\u016broto": {
+    "connections": [
+      ["Whang\u0101rei", 631.0296820528708]
+    ],
+    "location": [-36.1105166, 174.3512266],
+    "population": "1269\n"
+  },
+  "Helensville": {
+    "connections": [
+      ["Maungat\u016broto", 413.2426699764869]
+    ],
+    "location": [-36.6735173, 174.4470889],
+    "population": "2787\n"
+  },
+  "Wellsford": {
+    "connections": [
+      ["Helensville", 583.173461117512]
+    ],
+    "location": [-36.2947585, 174.5232312],
+    "population": "1929\n"
+  },
+  "Auckland": {
+    "connections": [
+      ["Wellsford", 2770.9688461146698]
+    ],
+    "location": [-36.8462286, 174.7660265],
+    "population": "1657000\n"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "Invercargill": {
+    "connections": [
+      ["", 0.28127615923882465]
+    ],
+    "location": [-46.429, 168.362],
+    "population": "57100\n"
+  },
+  "Edendale": {
+    "connections": [
+      ["Invercargill", 33.780671008826]
+    ],
+    "location": [-46.3167, 168.7833],
+    "population": "588\n"
+  },
+  "Gore": {
+    "connections": [
+      ["Edendale", 25.488576140932004]
+    ],
+    "location": [-46.1060314, 168.9387699],
+    "population": "12800\n"
+  }
+}

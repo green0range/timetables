@@ -1,0 +1,79 @@
+{
+  "Wellington": {
+    "connections": [
+      ["", 0.11833747540964638]
+    ],
+    "location": [-41.2782914, 174.7793471],
+    "population": "212700\n"
+  },
+  "Porirua": {
+    "connections": [
+      ["Wellington", 39.03913344658838]
+    ],
+    "location": [-41.1117281, 174.828878],
+    "population": "56559\n"
+  },
+  "Paraparaumu": {
+    "connections": [
+      ["Porirua", 73.34701368498602]
+    ],
+    "location": [-40.9160611, 175.0025552],
+    "population": "29700\n"
+  },
+  "\u014ctaki": {
+    "connections": [
+      ["Paraparaumu", 32.44972520002659]
+    ],
+    "location": [-40.7610578, 175.1557713],
+    "population": "3489\n"
+  },
+  "Levin": {
+    "connections": [
+      ["\u014ctaki", 38.6959111594343]
+    ],
+    "location": [-40.6312803, 175.2742669],
+    "population": "18800\n"
+  },
+  "Shannon": {
+    "connections": [
+      ["Levin", 2168.868461711343]
+    ],
+    "location": [-40.5477681, 175.4065996],
+    "population": "1506\n"
+  },
+  "Ohakune": {
+    "connections": [
+      ["Shannon", 426.1142821602898]
+    ],
+    "location": [-39.4041184, 175.4130115],
+    "population": "1150\n"
+  },
+  "National Park Village": {
+    "connections": [
+      ["Ohakune", 402.1284365718843]
+    ],
+    "location": [-39.1752457, 175.3897391],
+    "population": "174\n"
+  },
+  "Palmerston North": {
+    "connections": [
+      ["National Park Village", 5549.647043202549]
+    ],
+    "location": [-40.3464529, 175.59443],
+    "population": "88300\n"
+  },
+  "Wai\u014duru": {
+    "connections": [
+      ["Palmerston North", 905.4848233688354]
+    ],
+    "location": [-39.4816247, 175.6608556],
+    "population": "765\n"
+  },
+  "Taihape": {
+    "connections": [
+      ["Wai\u014duru", 928.2875757060174]
+    ],
+    "location": [-39.6791707, 175.7933581],
+    "population": "1790\n"
+  }
+}

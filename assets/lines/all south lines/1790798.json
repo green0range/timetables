@@ -1,0 +1,30 @@
+{
+  "Greymouth": {
+    "connections": [
+      ["", 0.017900499487086902]
+    ],
+    "location": [-42.4667, 171.2],
+    "population": "14100\n"
+  },
+  "Moana": {
+    "connections": [
+      ["Greymouth", 72.34908067378824]
+    ],
+    "location": [-42.5791275, 171.4764224],
+    "population": "57\n"
+  },
+  "\u014ctira": {
+    "connections": [
+      ["Moana", 283.7954133371792]
+    ],
+    "location": [-42.8305018, 171.5616639],
+    "population": "30\n"
+  },
+  "Arthur's Pass Village": {
+    "connections": [
+      ["\u014ctira", 8.904153426850826]
+    ],
+    "location": [-42.9438295, 171.5629254],
+    "population": "48\n"
+  }
+}

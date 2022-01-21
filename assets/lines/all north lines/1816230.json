@@ -1,0 +1,23 @@
+{
+  "Matamata": {
+    "connections": [
+      ["", 65.7234951372243]
+    ],
+    "location": [-37.810744, 175.771354],
+    "population": "8570\n"
+  },
+  "Put\u0101ruru": {
+    "connections": [
+      ["Matamata", 219.17080382979714]
+    ],
+    "location": [-38.0534764, 175.7793498],
+    "population": "4280\n"
+  },
+  "Tokoroa": {
+    "connections": [
+      ["Put\u0101ruru", 97.75177717749978]
+    ],
+    "location": [-38.220544, 175.867403],
+    "population": "14300\n"
+  }
+}
