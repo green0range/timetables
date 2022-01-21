@@ -10,6 +10,3 @@ TIMETABLES is still in early development so expect bugs! You can run from source
 * PIL (or Pillow)
 * matplotlib
 I will compile binaries for Windows and Linux once I have a release candidate ready!
-
-# Licence
-MIT
