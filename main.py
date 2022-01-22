@@ -11,7 +11,9 @@ import gscreen
 import saves
 from towns import Town, Service
 import logging
+import clipboard
 logger = logging.Logger(name="main")
+
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -82,8 +84,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sb_engines.valueChanged.connect(self.update_unconfirmed_service)
         self.sb_passenger_car.valueChanged.connect(self.update_unconfirmed_service)
         self.sb_sleeper_car.valueChanged.connect(self.update_unconfirmed_service)
-        self.sb_open_air.valueChanged.connect(self.update_unconfirmed_service)
-        self.sb_baggage.valueChanged.connect(self.update_unconfirmed_service)
+        #self.sb_open_air.valueChanged.connect(self.update_unconfirmed_service)
+        #self.sb_baggage.valueChanged.connect(self.update_unconfirmed_service)
         self.dsb_sleeper_fare.valueChanged.connect(self.update_unconfirmed_service)
         self.dsb_seat_fare.valueChanged.connect(self.update_unconfirmed_service)
         self.btn_confirm.clicked.connect(self.click_confirm_new_route)
@@ -101,6 +103,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_menu()
         self.btn_exit.clicked.connect(self.save_and_exit)
         self.btn_skip_year.clicked.connect(self.skip_year)
+        self.company_reputation = 0.5
 
     def skip_year(self):
         new_year = self.img_map.skip_year()
@@ -174,6 +177,10 @@ class MainWindow(QtWidgets.QMainWindow):
         im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
         return QtGui.QPixmap.fromImage(im)
 
+    def share(self, btn, message):
+        clipboard.copy(message)
+        btn.setText("Copied to clipboard")
+
 
     def show_menu(self):
         """
@@ -193,7 +200,7 @@ class MainWindow(QtWidgets.QMainWindow):
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidget(frm_menu)
         scroll_area.setObjectName("a")
-        lbl_title = QtWidgets.QLabel("TIMETABLES! \n(the game)")
+        lbl_title = QtWidgets.QLabel("TIMETABLES! \n(The train scheduling game)")
         font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
         font_id2 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Raleway-VariableFont_wght.ttf'))
         font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
@@ -225,7 +232,16 @@ class MainWindow(QtWidgets.QMainWindow):
         btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3))
         btn_highscore = QtWidgets.QPushButton("View Highscores")
         btn_share = QtWidgets.QPushButton("Share with friend")
+        share_text = "Hey friend! I'm playing a game about scheduling trains, you should get it too! https://timetablesgame.nz"
+        btn_share.clicked.connect(lambda: self.share(btn_share, share_text))
+        share_mp_text = """Dear Member of Parliament,
+
+I'm writing to tell you about a political video game I think you should try. It is about scheduling trains to avoid the worst effects of climate change.
+I think you could use it for both some light entertainment and as a first step in informing public transport policy!
+
+You can find out more about it at https://timetablesgame.nz"""
         btn_share_mp = QtWidgets.QPushButton("Share with your MP")
+        btn_share_mp.clicked.connect(lambda: self.share(btn_share_mp, share_mp_text))
         gr_frm_menu.addWidget(lbl_title, 0, 0)
         gr_frm_menu.addWidget(rb_slot1, 1, 0)
         gr_frm_menu.addWidget(rb_slot2, 2, 0)
@@ -296,13 +312,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def tick(self):
         if not self.btn_pause.isChecked():
             win = self.img_map.update_time(self.tick_rate)
-            """win will be of form [P/W/F] REASON where P = PASS/PROCEED, W = WIN, F = FAIL"""
+            """win will be of form [P/W/F] REASON where P = PASS/PROCEED (do nothing), W = WIN, F = FAIL
+                There is also the code C = CAUTION, used when the player is unable to afford a new service."""
             if win[0] == "W":
                 self.show_win_screen()
             elif win[0] == "F":
                 self.show_fail_screen(win[2:])
             for service in self.services:
-                response = service.run(self.img_map.get_increment(), self.img_map.get_time(), self.wallet, self.score)
+                response = service.run(self.img_map.get_increment(), self.img_map.get_time(), self.wallet, self.score, self.company_reputation)
                 if response[0] == "F":
                     self.show_fail_screen(response[2:])
         self.update_map_image()
@@ -323,6 +340,9 @@ class MainWindow(QtWidgets.QMainWindow):
         service to reflect the changes. It then called the method update_service_dependant_widgets
         :return:
         """
+        total_car_allowed = self.sb_engines.value() * 10
+        self.sb_sleeper_car.setMaximum(total_car_allowed - self.sb_passenger_car.value())
+        self.sb_passenger_car.setMaximum(total_car_allowed - self.sb_sleeper_car.value())
         stations = []
         for station in self.intermediate_towns:
             if station.isChecked():
@@ -340,14 +360,14 @@ class MainWindow(QtWidgets.QMainWindow):
         days = [self.ckb_mon.isChecked(), self.ckb_tue.isChecked(), self.ckb_wed.isChecked(), self.ckb_thu.isChecked(),
                 self.ckb_fri.isChecked(), self.ckb_sat.isChecked(), self.ckb_sun.isChecked()]
         config = [self.sb_engines.value(), self.sb_passenger_car.value(), self.sb_sleeper_car.value(),
-                  self.sb_open_air.value(), self.sb_baggage.value()]
+                  0, 0]
         fares = [self.dsb_seat_fare.value(), self.dsb_sleeper_fare.value()]
         self.unconfirmed_service.update(stations, returns, departure_times, days, config, fares)
         self.update_service_dependant_widgets()
 
     def update_service_dependant_widgets(self):
         self.lbl_feedback_1.setText(f"This train will be able to carry a maximum of {self.unconfirmed_service.get_capacity()} passengers, cost ${self.unconfirmed_service.get_up_front_cost()} to build and ${self.unconfirmed_service.get_running_cost()}/journey to run")
-        self.lbl_feedback_2.setText(f"Expected Revenue per journey at 70% full is ${self.unconfirmed_service.get_estimated_revenue()}, giving an expected profit of ${self.unconfirmed_service.get_estimated_profit()} before tax")
+        self.lbl_feedback_2.setText(f"Expected Revenue per journey at 70% full is ${np.round(self.unconfirmed_service.get_estimated_revenue(),2)}, giving an expected profit of ${np.round(self.unconfirmed_service.get_estimated_profit(),2)} before tax")
         self.lcd_arrival_time.display(self.unconfirmed_service.get_arrival_time())
         self.lcd_return_time.display(self.unconfirmed_service.get_return_time())
 
@@ -492,6 +512,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fill_report_table(table, service.get_stations(), passenger_numbers, earnings)
 
     def delete_service(self, service, widgets):
+        self.company_reputation = self.company_reputation * 0.8  # decrease by 20%
         widgets[0].removeWidget(widgets[1])
         widgets[0].removeWidget(widgets[2])
         widgets[0].removeWidget(widgets[3])
@@ -533,7 +554,9 @@ class MainWindow(QtWidgets.QMainWindow):
         service_panel.show()
 
     def click_confirm_new_route(self):
+        self.company_reputation = self.company_reputation * (1.0 + 0.1 * (self.unconfirmed_service.get_capacity()/486))
         name = self.txt_service_name.text()
+        self.update_unconfirmed_service()
         response = self.unconfirmed_service.confirm_service(name, self.wallet, self.img_map.get_time().strftime("%d/%m/%y"))
         if response[0] == "C":
             self.show_caution(response)

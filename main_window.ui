@@ -154,21 +154,22 @@
                 <string>Train Configuration</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_4">
-                <item row="1" column="4">
-                 <widget class="QSpinBox" name="sb_baggage"/>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="lbl_passenger_car">
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_15">
                   <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Passenger Cars&lt;/span&gt; contain seating for passengers. They can carry up to 50 passengers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What price will you charge for the service? The price you set will be charged to anyone going between the first and last stations. If passengers go to other stations, the price they pay will be scaled based on how many stations they travel past before disembarking.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="text">
-                   <string>Passenger Carriage</string>
+                   <string>Fare Charge $NZ:</string>
                   </property>
                  </widget>
                 </item>
                 <item row="1" column="2">
-                 <widget class="QSpinBox" name="sb_sleeper_car"/>
+                 <widget class="QSpinBox" name="sb_sleeper_car">
+                  <property name="maximum">
+                   <number>5</number>
+                  </property>
+                 </widget>
                 </item>
                 <item row="2" column="1">
                  <widget class="QDoubleSpinBox" name="dsb_seat_fare">
@@ -179,7 +180,17 @@
                    <double>1.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>10.000000000000000</double>
+                   <double>49.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="lbl_sleeper">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Sleeper Cars&lt;/span&gt; are divided into small rooms with beds for passengers to sleep on. They are especially popular to long-distance over-night trips, were staying in a seat too long would be unconfortable. Each car can carry &lt;span style=&quot; font-weight:600;&quot;&gt;16 sleeping passengers.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Sleeper Cars</string>
                   </property>
                  </widget>
                 </item>
@@ -193,19 +204,30 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="3">
-                 <widget class="QSpinBox" name="sb_open_air"/>
-                </item>
                 <item row="1" column="1">
-                 <widget class="QSpinBox" name="sb_passenger_car"/>
+                 <widget class="QSpinBox" name="sb_passenger_car">
+                  <property name="maximum">
+                   <number>5</number>
+                  </property>
+                 </widget>
                 </item>
-                <item row="0" column="4">
-                 <widget class="QLabel" name="lbl_baggage">
+                <item row="2" column="2">
+                 <widget class="QDoubleSpinBox" name="dsb_sleeper_fare">
+                  <property name="maximum">
+                   <double>999.899999999999977</double>
+                  </property>
+                  <property name="value">
+                   <double>169.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="lbl_passenger_car">
                   <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Baggage cars&lt;/span&gt; carry your passenger's baggage. They are not required but if they are not used, passenger will only be able to take a carry on bag, which some potential passengers may find off-putting.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Passenger Cars&lt;/span&gt; contain seating for passengers. They can carry up to 50 passengers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="text">
-                   <string>Baggage Car</string>
+                   <string>Passenger Carriage</string>
                   </property>
                  </widget>
                 </item>
@@ -216,46 +238,6 @@
                   </property>
                   <property name="text">
                    <string>Engines</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label_15">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What price will you charge for the service? The price you set will be charged to anyone going between the first and last stations. If passengers go to other stations, the price they pay will be scaled based on how many stations they travel past before disembarking.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Fare Charge $NZ:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="3">
-                 <widget class="QLabel" name="lbl_open_air">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Open-air viewing decks&lt;/span&gt; are popular attractions on tourist trains. Passengers are able to leave their seat and enjoy the scenary. &lt;span style=&quot; font-weight:600;&quot;&gt;They do not provide any extra capacity&lt;/span&gt; as all passengers must also have a seat (or bed), but will attract tourists to your train, who are generally willing to pay a higher ticket price. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Open-Air  Deck</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="2">
-                 <widget class="QDoubleSpinBox" name="dsb_sleeper_fare">
-                  <property name="maximum">
-                   <double>999.899999999999977</double>
-                  </property>
-                  <property name="value">
-                   <double>100.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QLabel" name="lbl_sleeper">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Sleeper Cars&lt;/span&gt; are divided into small rooms with beds for passengers to sleep on. They are especially popular to long-distance over-night trips, were staying in a seat too long would be unconfortable. Each car can carry &lt;span style=&quot; font-weight:600;&quot;&gt;16 sleeping passengers.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Sleeper Cars</string>
                   </property>
                  </widget>
                 </item>

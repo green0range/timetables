@@ -30,9 +30,27 @@ class PatronageData:
         self.weights = []
         self.return_weights = []
         self.chance_of_recalc = 1
+        self.company_reputation = 0.5
+
+    def update_reputation(self, reputation):
+        if reputation != self.company_reputation:
+            self.company_reputation = reputation
+            ''' Prune the data so data from old reputation scores don't skew results '''
+            try:
+                self.data = self.data[len(self.data) - 10:]
+                self.weights = self.weights[len(self.weights) - 10:]
+                self.return_data = self.return_data[len(self.return_data) - 10:]
+                self.return_weights = self.return_weights[len(self.return_weights) - 10:]
+            except IndexError:  # if len(data) < 10, don't worry about it!
+                pass
+            for i in range(len(self.weights)):
+                self.weights[i] /= 3  # sets all weights to 1/3rd of original value
+            for i in range(len(self.return_weights)):
+                self.return_weights[i] /= 3  # sets all weights to 1/3rd of original value
+            self.chance_of_recalc += 0.7
 
     def get_run_instance(self, is_return):
-        if self.chance_of_recalc == 1:
+        if self.chance_of_recalc >= 1:
             return -1
         if random.random() < self.chance_of_recalc:
             return -1
@@ -240,7 +258,7 @@ class Service:
             self.passenger_confidence = 0.1 + random.random() * (0.3 - 0.1)  # start at random between 10% and 30%
             return "PASS"
 
-    def run(self, increment, time, wallet, score):
+    def run(self, increment, time, wallet, score, company_reputation):
         """
         Runs the train all the train services between time_0 and time_1, note this is called after the time is
         incremented so t_0 is time-increment to get back to pre-incremented time.
@@ -248,6 +266,7 @@ class Service:
         :param time: The current time (after increment)
         :return:
         """
+        self.pd.update_reputation(company_reputation)
         if not self.confirmed:
             return "P"  # if the service is unconfirmed, it does not run.
         time_0 = time - increment
@@ -271,7 +290,7 @@ class Service:
                             service running and record the results, then '''
                         run_instance = self.pd.get_run_instance(False)
                         if run_instance == -1:
-                            profit = self.calculate_patronage(self.departure_times[i].time(), t.weekday(), score, time_0.date())
+                            profit = self.calculate_patronage(self.departure_times[i].time(), t.weekday(), score, time_0.date(), company_reputation)
                         else:
                             profit = run_instance[4]
                             self.passenger_numbers_report.insert(0, run_instance[:4])
@@ -298,7 +317,7 @@ class Service:
                             run_instance = self.pd.get_run_instance(True)
                             if run_instance == -1:
                                 profit = self.calculate_patronage(return_time.time(), t.weekday(), score,
-                                                                  time_0.date(), is_return=True)
+                                                                  time_0.date(), company_reputation, is_return=True)
                             else:
                                 for j, town in enumerate(self.stations):
                                     town.people_arrived(run_instance[1][j] + run_instance[3][j])
@@ -376,7 +395,7 @@ class Service:
         else:  # case 1
             return True
 
-    def calculate_patronage(self, time, dow, score, date, is_return=False):
+    def calculate_patronage(self, time, dow, score, date, reputation, is_return=False):
         """
         Calculates the number of passengers on a particular journey, and returns the total profit from fares.
         To do this we calculate the number of people who want to travel by train, boost that number depending on
@@ -407,6 +426,8 @@ class Service:
         """ The boost_factor is used to increase passenger numbers in cases of rush hours, quick service, or
             high passenger confidence in the service."""
         boost_factor = np.ones(len(self.stations))
+        reputation_boost = np.ones(len(self.stations)) * (0.15 * random.random() + 0.1) * reputation
+        boost_factor += reputation_boost
         for i, town in enumerate(self.stations):
             town_pops[i] = town.population
             for ep in town.economic_partners:
