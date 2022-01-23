@@ -243,7 +243,7 @@ class Map:
         money = "${:,}".format(self.wallet.get_balance())
         score = "{:,} pkm this year, {:,} pkm last year".format(self.score.get_score(), self.score.get_lastyear_score())
         percent_connected = "{:.1f} % towns serviced".format(self.percent_connected)
-        font = ImageFont.truetype('/home/william/PycharmProjects/CCC/assets/fonts/Raleway-VariableFont_wght.ttf', 16)
+        font = ImageFont.truetype('assets/fonts/Raleway-VariableFont_wght.ttf', 16)
         if self.map_image_needs_update:
             self.map_image_needs_update = False
             self.map_image = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))

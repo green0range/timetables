@@ -195,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
         frm_menu = QtWidgets.QFrame()
-        frm_menu.setMinimumSize(self.screen_size.width()*0.5 - 50, self.screen_size.height() - 50)
+        frm_menu.setMinimumSize(int(self.screen_size.width()*0.5) - 50, self.screen_size.height() - 50)
         gr_frm_menu = QtWidgets.QGridLayout(frm_menu)
         #gr_frm_menu.setAlignment(QtCore.Qt.AlignTop)
         scroll_area = QtWidgets.QScrollArea()

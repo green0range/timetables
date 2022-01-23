@@ -6,6 +6,8 @@ import pickle
 class SaveManager():
     def __init__(self):
         self.save_slot = None
+        if not os.path.exists("saves"):
+            os.mkdir("saves")
 
     def get_save_time(self, slotnum):
         path = os.path.join("saves", f"slot{slotnum}")
