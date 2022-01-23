@@ -128,6 +128,11 @@ class ServiceColours:
         self.current_number += 1
         return a
 
+
+def get_sort_key(t):
+    return t.population
+
+
 class Map:
     def __init__(self, width, height, towns, wallet, score, colours):
         self.map_image = None
@@ -141,6 +146,8 @@ class Map:
         self.time_increment = datetime.timedelta(days=1)
         self.connection_ids = []
         self.connection_colours = []
+        self.town_draw_name = []
+        self.town_draw_name_complete = False
         '''These represent the bounding latitude and longutiude of the area of the world we want to
             draw. Needs to be altered for each country
             
@@ -178,6 +185,7 @@ class Map:
                 self.connection_ids.append(path[i - 1].get_name() + '-' + path[i].get_name())
                 self.connection_colours.append(col)
         self.map_image_needs_update = True
+        self.town_draw_name_complete = False
         self.redraw()
 
     def load_wallet_score(self, wallet, score):
@@ -193,6 +201,7 @@ class Map:
         elif id == "nz":
             self.current_bounding_box = self.bounding_box_aotearoa
         self.map_image_needs_update = True
+        self.town_draw_name_complete = False
 
     def convert_latlgn_to_xy(self, latlgn):
         deltaX = self.current_bounding_box[1] - self.current_bounding_box[0]
@@ -234,15 +243,27 @@ class Map:
         money = "${:,}".format(self.wallet.get_balance())
         score = "{:,} pkm this year, {:,} pkm last year".format(self.score.get_score(), self.score.get_lastyear_score())
         percent_connected = "{:.1f} % towns serviced".format(self.percent_connected)
-        font = ImageFont.truetype('/home/william/PycharmProjects/CCC/assets/fonts/Raleway-VariableFont_wght.ttf', 14)
+        font = ImageFont.truetype('/home/william/PycharmProjects/CCC/assets/fonts/Raleway-VariableFont_wght.ttf', 16)
         if self.map_image_needs_update:
             self.map_image_needs_update = False
             self.map_image = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
             draw_map = ImageDraw.Draw(self.map_image)
             for town in self.towns:
                 x, y = self.convert_latlgn_to_xy(town.get_latlgn())
-                draw_map.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(0, 0, 0), outline=(0, 0, 0))
-                if town.population > 2000:
+                draw_map.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(200, 200, 200), outline=(0, 0, 0))
+                '''If there are nearby towns, we only draw the text for the most populus town.'''
+                if not self.town_draw_name_complete:
+                    towns_to_close = []
+                    self.town_draw_name = []
+                    for town2 in self.towns:
+                        x2, y2 = self.convert_latlgn_to_xy(town2.get_latlgn())
+                        if np.linalg.norm(np.array([x-x2, y-y2])) < 37:
+                            towns_to_close.append(town2)
+                    if len(towns_to_close) > 0:
+                        towns_to_close.append(town)
+                    towns_to_close.sort(key=get_sort_key)
+                    self.town_draw_name.append(towns_to_close.pop())
+                if town in self.town_draw_name:
                     draw_map.text((x, y), town.get_name(), font=font, fill=(0, 0, 0, 255))
                 for conn in town.connections:
                     connection_id = town.get_name() + '-' + conn[0].get_name()
@@ -259,6 +280,7 @@ class Map:
                         for i, colour in enumerate(line_colour):
                             draw_map.line((x + i*normal_vector[0], y + i*normal_vector[1], x2 + i*normal_vector[0],
                                            y2 + i*normal_vector[1]), fill=colour, width=2)
+            self.town_draw_name_complete = True  # it will only generate the list (expensive) on first run
         self.img = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
         Image.Image.paste(self.img, self.map_image)
         draw = ImageDraw.Draw(self.img)

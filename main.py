@@ -18,9 +18,10 @@ logger = logging.Logger(name="main")
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, scr_size, *args, **kwargs):
         """ A lot of boilerplate stuff here"""
         super().__init__(*args, **kwargs)
+        self.screen_size = scr_size
         self.showFullScreen()  # the map image size is set based on the startup screen size, so don't resize!
         self.intermediate_towns = []
         self.towns = []
@@ -58,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
         pix_sleeper.load("assets/sleeper_thm.png")
         self.lbl_sleeper.setPixmap(pix_sleeper)
         # map image
-        self.img_map = gscreen.Map(1000, 1000, self.towns, self.wallet, self.score, self.colours)
+        self.img_map = gscreen.Map(int(self.screen_size.width()*0.5), self.screen_size.height(), self.towns, self.wallet, self.score, self.colours)
         self.update_map_image()
         ''' Services are train services between two towns (with possible intermediate stops). The service Objects holds
             all information about a service, such as what the carriage setup is etc. The service object starts as
@@ -194,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
         frm_menu = QtWidgets.QFrame()
-        frm_menu.setMinimumSize(700, 1000)
+        frm_menu.setMinimumSize(self.screen_size.width()*0.5 - 50, self.screen_size.height() - 50)
         gr_frm_menu = QtWidgets.QGridLayout(frm_menu)
         #gr_frm_menu.setAlignment(QtCore.Qt.AlignTop)
         scroll_area = QtWidgets.QScrollArea()
@@ -573,8 +574,9 @@ You can find out more about it at https://timetablesgame.nz"""
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
+    size = app.primaryScreen().size()
     with open("style.css", "r") as f:
         app.setStyleSheet(f.read())
-    window = MainWindow()
+    window = MainWindow(scr_size=size)
     window.show()
     app.exec_()

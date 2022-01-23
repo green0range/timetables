@@ -186,7 +186,7 @@
   "Taumarunui": {
     "connections": [
       ["National Park Village", 42.8354791788693],
-      ["The Republic of Whangamōmona",80]
+      ["Whangamōmona",80]
     ],
     "location": [-38.8825901, 175.2638518],
     "population": "5052\n"
@@ -375,7 +375,7 @@
     "location": [-39.905597, 175.054399],
     "population": "47300\n"
   },
-  "The Republic of Whangamōmona": {
+  "Whangamōmona": {
     "connections": [
       ["Stratford", 60.85994986793331]
     ],
