@@ -53,9 +53,12 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QLabel" name="label">
+           <widget class="QPushButton" name="btn_achievements">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
-             <string>TIMETABLES</string>
+             <string>Achievements</string>
             </property>
            </widget>
           </item>
@@ -82,9 +85,6 @@
             </property>
             <property name="checkable">
              <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -529,6 +529,9 @@
             <property name="text">
              <string>Te-Ika-A-Māui</string>
             </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="0" column="1">
@@ -539,6 +542,12 @@
             <property name="text">
              <string>Aotearoa</string>
             </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
            </widget>
           </item>
           <item row="0" column="3">
@@ -548,6 +557,9 @@
             </property>
             <property name="text">
              <string>Te Waipounau</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

@@ -148,6 +148,8 @@ class Map:
         self.connection_colours = []
         self.town_draw_name = []
         self.town_draw_name_complete = False
+        self.achievement_display_text = ""
+        self.achievement_display_counter = 0
         '''These represent the bounding latitude and longutiude of the area of the world we want to
             draw. Needs to be altered for each country
             
@@ -163,6 +165,7 @@ class Map:
         self.about_to_skip_year = False
         self.previous_time_increment = None
         self.win_conditions = achievements.Conditions()
+        self.towns.sort(key=get_sort_key)
 
     def skip_year(self):
         new_year = self.game_time.year + 1
@@ -185,7 +188,6 @@ class Map:
                 self.connection_ids.append(path[i - 1].get_name() + '-' + path[i].get_name())
                 self.connection_colours.append(col)
         self.map_image_needs_update = True
-        self.town_draw_name_complete = False
         self.redraw()
 
     def load_wallet_score(self, wallet, score):
@@ -201,7 +203,6 @@ class Map:
         elif id == "nz":
             self.current_bounding_box = self.bounding_box_aotearoa
         self.map_image_needs_update = True
-        self.town_draw_name_complete = False
 
     def convert_latlgn_to_xy(self, latlgn):
         deltaX = self.current_bounding_box[1] - self.current_bounding_box[0]
@@ -243,7 +244,8 @@ class Map:
         money = "${:,}".format(self.wallet.get_balance())
         score = "{:,} pkm this year, {:,} pkm last year".format(self.score.get_score(), self.score.get_lastyear_score())
         percent_connected = "{:.1f} % towns serviced".format(self.percent_connected)
-        font = ImageFont.truetype('assets/fonts/Raleway-VariableFont_wght.ttf', 16)
+        font = ImageFont.truetype(os.path.join('assets', 'fonts', 'Raleway-Medium.ttf'), 12)
+        font2 = ImageFont.truetype(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'), 14)
         if self.map_image_needs_update:
             self.map_image_needs_update = False
             self.map_image = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
@@ -253,18 +255,14 @@ class Map:
                 draw_map.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(200, 200, 200), outline=(0, 0, 0))
                 '''If there are nearby towns, we only draw the text for the most populus town.'''
                 if not self.town_draw_name_complete:
-                    towns_to_close = []
-                    self.town_draw_name = []
-                    for town2 in self.towns:
+                    should_add = True
+                    for town2 in self.town_draw_name:
                         x2, y2 = self.convert_latlgn_to_xy(town2.get_latlgn())
-                        if np.linalg.norm(np.array([x-x2, y-y2])) < 37:
-                            towns_to_close.append(town2)
-                    if len(towns_to_close) > 0:
-                        towns_to_close.append(town)
-                    towns_to_close.sort(key=get_sort_key)
-                    self.town_draw_name.append(towns_to_close.pop())
-                if town in self.town_draw_name:
-                    draw_map.text((x, y), town.get_name(), font=font, fill=(0, 0, 0, 255))
+                        w, h = font.getsize(town.get_name())
+                        if x-w-10 < x2 < x+w+10 and y-h/2-10 < y2 < y+h/2+10:
+                            should_add = False
+                    if should_add:
+                        self.town_draw_name.append(town)
                 for conn in town.connections:
                     connection_id = town.get_name() + '-' + conn[0].get_name()
                     x2, y2 = self.convert_latlgn_to_xy(conn[0].get_latlgn())
@@ -280,14 +278,28 @@ class Map:
                         for i, colour in enumerate(line_colour):
                             draw_map.line((x + i*normal_vector[0], y + i*normal_vector[1], x2 + i*normal_vector[0],
                                            y2 + i*normal_vector[1]), fill=colour, width=2)
+            for town in self.town_draw_name:
+                x, y = self.convert_latlgn_to_xy(town.get_latlgn())
+                w, h = font.getsize(town.get_name())
+                draw_map.text((x, y-h/2), town.get_name(), font=font, fill=(0, 0, 0, 255))
             self.town_draw_name_complete = True  # it will only generate the list (expensive) on first run
         self.img = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
         Image.Image.paste(self.img, self.map_image)
         draw = ImageDraw.Draw(self.img)
-        draw.text((100,50), t, font=font, fill=(0, 0, 0, 255))
-        draw.text((300,50), money, font=font, fill=(0, 0, 0, 255))
-        draw.text((100, 100), score, font=font, fill=(0,0,0,255))
-        draw.text((100, 150), percent_connected, font=font, fill=(0, 0, 0, 255))
+        draw.text((100,50), t, font=font2, fill=(0, 0, 0, 255))
+        draw.text((300,50), money, font=font2, fill=(0, 0, 0, 255))
+        draw.text((100, 100), score, font=font2, fill=(0,0,0,255))
+        draw.text((100, 150), percent_connected, font=font2, fill=(0, 0, 0, 255))
+        if self.achievement_display_counter > 0:
+            draw.text((int(self.img.width/2)-100, self.img.height - 100), self.achievement_display_text, font=font2, fill=(0, 0, 0, 255))
+
+    def display_new_achievement(self, achieves):
+        if len(achieves) > 0:
+            self.achievement_display_text = ""
+            for ach in achieves:
+                self.achievement_display_text += "Achievement Completed: " + ach + "\n"
+            self.redraw()
+            self.achievement_display_counter = 5
 
     def update_time(self, tick_rate):
         self.game_time += self.time_increment
@@ -296,6 +308,8 @@ class Map:
             self.time_increment = self.previous_time_increment
         self.redraw()
         self.score.update_time(self.game_time)
+        if self.achievement_display_counter > 0:
+            self.achievement_display_counter -= 1
         return self.win_conditions.do_checks(self.game_time, self.percent_connected, self.score)
 
     def get_image_qt(self):

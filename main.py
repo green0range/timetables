@@ -7,11 +7,14 @@ import datetime
 import json
 from matplotlib import pyplot
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+import achievements
 import gscreen
 import saves
 from towns import Town, Service
 import logging
 import clipboard
+import webbrowser
 logger = logging.Logger(name="main")
 
 
@@ -96,9 +99,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.setTimerType(QtCore.Qt.CoarseTimer)
         self.timer.timeout.connect(self.tick)
         self.btn_toggle_speed.clicked.connect(self.img_map.change_speed)
-        self.btn_bounding_nz.clicked.connect(lambda: self.img_map.change_bounding_box("nz"))
-        self.btn_bounding_n.clicked.connect(lambda: self.img_map.change_bounding_box("north"))
-        self.btn_bounding_s.clicked.connect(lambda: self.img_map.change_bounding_box("south"))
+        self.btn_bounding_nz.clicked.connect(lambda: self.set_view("nz"))
+        self.btn_bounding_n.clicked.connect(lambda: self.set_view("north"))
+        self.btn_bounding_s.clicked.connect(lambda: self.set_view("south"))
+        self.achievements = achievements.Achievements()
+        self.btn_achievements.clicked.connect(self.display_achievements)
         self.save_manager = saves.SaveManager()
         self.towns_with_services = []  # this allows tracking progress to have 90% towns connected.
         self.show_menu()
@@ -106,11 +111,48 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_skip_year.clicked.connect(self.skip_year)
         self.company_reputation = 0.5
 
+    def set_view(self, id):
+        self.img_map.change_bounding_box(id)
+        if id == "nz":
+            self.btn_bounding_nz.setChecked(True)
+            self.btn_bounding_n.setChecked(False)
+            self.btn_bounding_s.setChecked(False)
+        elif id == "north":
+            self.btn_bounding_nz.setChecked(False)
+            self.btn_bounding_n.setChecked(True)
+            self.btn_bounding_s.setChecked(False)
+        elif id == "south":
+            self.btn_bounding_nz.setChecked(False)
+            self.btn_bounding_n.setChecked(False)
+            self.btn_bounding_s.setChecked(True)
+
+    def display_achievements(self):
+        ach_all = self.achievements.get_all_achievements()
+        ach_done = self.achievements.get_completed_achievements(self.services[:len(self.services)-1])
+        self.close_report()
+        if self.mode_show_map:
+            self.mode_show_map = False
+            if self.map_image is not None:
+                self.gr_left.removeWidget(self.map_image)
+                self.map_image = None
+        for key in ach_all:
+            lbl = QtWidgets.QLabel(f"<h4>{key}</h4>")
+            if key in ach_done:
+                lbl.setText(f"<s><h4>{key}</h4></s>")
+            lbl_descript = QtWidgets.QLabel(ach_all[key])
+            self.gr_left.addWidget(lbl)
+            self.gr_left.addWidget(lbl_descript)
+        btn_close = QtWidgets.QPushButton("Close")
+        btn_close.clicked.connect(self.close_report)
+        self.gr_left.addWidget(btn_close)
+
+
     def skip_year(self):
         new_year = self.img_map.skip_year()
         self.btn_skip_year.setText(f"Skip to {new_year+1}")
 
     def start_game(self, rb1, rb2, rb3):
+        self.btn_bounding_nz.setChecked(True)
         slot = None
         if rb1.isChecked():
             slot = 1
@@ -137,12 +179,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.img_map.update_percent_connected(len(self.towns_with_services) / len(self.towns))
         self.timer.start()
         self.btn_new_route.setEnabled(True)
-        self.btn_skip_year.setEnabled(True)
+        self.btn_skip_year.setEnabled(False)  # disabled because it doesn't work properly
         self.btn_pause.setEnabled(True)
         self.btn_toggle_speed.setEnabled(True)
         self.btn_bounding_nz.setEnabled(True)
         self.btn_bounding_n.setEnabled(True)
         self.btn_bounding_s.setEnabled(True)
+        self.btn_achievements.setEnabled(True)
         self.close_report()
 
     def delete_save(self, slot, radiobutton):
@@ -178,9 +221,11 @@ class MainWindow(QtWidgets.QMainWindow):
         im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
         return QtGui.QPixmap.fromImage(im)
 
-    def share(self, btn, message):
+    def share(self, btn, message, original_text):
         clipboard.copy(message)
         btn.setText("Copied to clipboard")
+        t = QtCore.QTimer()
+        t.singleShot(1000, lambda: btn.setText(original_text))
 
 
     def show_menu(self):
@@ -203,7 +248,7 @@ class MainWindow(QtWidgets.QMainWindow):
         scroll_area.setObjectName("a")
         lbl_title = QtWidgets.QLabel("TIMETABLES! \n(The train scheduling game)")
         font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
-        font_id2 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Raleway-VariableFont_wght.ttf'))
+        font_id2 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf'))
         font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
         font_string2 = QtGui.QFontDatabase.applicationFontFamilies(font_id2)[0]
         lbl_title.setFont(QtGui.QFont(font_string1, 20))
@@ -220,21 +265,23 @@ class MainWindow(QtWidgets.QMainWindow):
         with open(os.path.join("assets", "welcome_email.txt"), "r") as f:
             intro_txt1, intro_txt2 = f.read().split("^")  # this is where the plot goes
         lbl_message1 = QtWidgets.QLabel(intro_txt1)
-        lbl_message1.setFont(QtGui.QFont(font_string2, 12))
+        lbl_message1.setFont(QtGui.QFont(font_string2, 8))
         lbl_message1.setWordWrap(True)
         lbl_plot = QtWidgets.QLabel("")
         lbl_plot.setPixmap(self.get_emissions_plot())
         lbl_message2 = QtWidgets.QLabel(intro_txt2)
-        lbl_message2.setFont(QtGui.QFont(font_string2, 12))
+        lbl_message2.setFont(QtGui.QFont(font_string2, 8))
         lbl_message2.setWordWrap(True)
         cmb_difficulty = QtWidgets.QComboBox()
         cmb_difficulty.addItems(["Normal difficulty", "Easy", "Hard"])
         btn_begin = QtWidgets.QPushButton("Start Game")
         btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3))
-        btn_highscore = QtWidgets.QPushButton("View Highscores")
+        ''' If release, this will go to a highscores webpage, but for now I will use it to get feedback'''
+        btn_highscore = QtWidgets.QPushButton("Send Feedback")
+        btn_highscore.clicked.connect(lambda: webbrowser.open("https://docs.google.com/forms/d/e/1FAIpQLSdnpQeyxYQPsScqqeVxJuE9IL74KrecaWQhIOkMUz5ov5wKCA/viewform?usp=sf_link"))
         btn_share = QtWidgets.QPushButton("Share with friend")
         share_text = "Hey friend! I'm playing a game about scheduling trains, you should get it too! https://timetablesgame.nz"
-        btn_share.clicked.connect(lambda: self.share(btn_share, share_text))
+        btn_share.clicked.connect(lambda: self.share(btn_share, share_text, "Share with friend"))
         share_mp_text = """Dear Member of Parliament,
 
 I'm writing to tell you about a political video game I think you should try. It is about scheduling trains to avoid the worst effects of climate change.
@@ -242,7 +289,7 @@ I think you could use it for both some light entertainment and as a first step i
 
 You can find out more about it at https://timetablesgame.nz"""
         btn_share_mp = QtWidgets.QPushButton("Share with your MP")
-        btn_share_mp.clicked.connect(lambda: self.share(btn_share_mp, share_mp_text))
+        btn_share_mp.clicked.connect(lambda: self.share(btn_share_mp, share_mp_text, "Share with your MP"))
         gr_frm_menu.addWidget(lbl_title, 0, 0)
         gr_frm_menu.addWidget(rb_slot1, 1, 0)
         gr_frm_menu.addWidget(rb_slot2, 2, 0)
@@ -562,6 +609,8 @@ You can find out more about it at https://timetablesgame.nz"""
         if response[0] == "C":
             self.show_caution(response)
         else:
+            new_achieves = self.achievements.check_for_new_achievement(self.unconfirmed_service)
+            self.img_map.display_new_achievement(new_achieves)
             for town in self.unconfirmed_service.stations:
                 if town not in self.towns_with_services:
                     self.towns_with_services.append(town)
