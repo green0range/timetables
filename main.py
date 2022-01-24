@@ -273,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow):
         lbl_message2.setFont(QtGui.QFont(font_string2, 8))
         lbl_message2.setWordWrap(True)
         cmb_difficulty = QtWidgets.QComboBox()
-        cmb_difficulty.addItems(["Normal difficulty", "Easy", "Hard"])
+        cmb_difficulty.addItems(["Normal difficulty"])
         btn_begin = QtWidgets.QPushButton("Start Game")
         btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3))
         ''' If release, this will go to a highscores webpage, but for now I will use it to get feedback'''
@@ -338,7 +338,7 @@ You can find out more about it at https://timetablesgame.nz"""
         font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
         lbl_game_over = QtWidgets.QLabel("GAME OVER!")
         lbl_game_over.setFont(QtGui.QFont(font_string1, 20))
-        lbl = QtWidgets.QLabel(message[2:])
+        lbl = QtWidgets.QLabel(message)
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
         self.gr_left.addWidget(lbl_game_over)
@@ -565,12 +565,14 @@ You can find out more about it at https://timetablesgame.nz"""
         widgets[0].removeWidget(widgets[2])
         widgets[0].removeWidget(widgets[3])
         self.gr_list_of_routes.removeWidget(widgets[0].parentWidget())
+        self.colours.remove(service)
+        # we have to completely redo, because if we just delete to towns that this service services, then we may miss
+        # a town that is also serviced by another route.
         for i, candidate in enumerate(self.services):
             if candidate is service:
                 self.services.pop(i)
-                return
-        # we have to completely redo, because if we just delete to towns that this service services, then we may miss
-        # a town that is also serviced by another route.
+                self.img_map.update_connection_ids()
+                break
         self.towns_with_services = []
         for i, service in enumerate(self.services):
             if i == len(self.services) - 1:
@@ -579,9 +581,7 @@ You can find out more about it at https://timetablesgame.nz"""
                 for town in service.stations:
                     if town not in self.towns_with_services:
                         self.towns_with_services.append(town)
-                self.update_services_panel(service)
-        self.img_map.update_percent_connected(len(self.towns_with_services)/len(self.towns))
-        logger.warning("Could not find service to delete")
+        self.img_map.update_percent_connected(len(self.towns_with_services) / len(self.towns))
 
     def update_services_panel(self, service):
         frm_service_panel = QtWidgets.QFrame()

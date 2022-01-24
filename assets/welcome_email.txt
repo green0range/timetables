@@ -4,21 +4,21 @@ subject: Tranz-Passenger
                         
 Tēnā koe hello!
 
-We have a bit of a problem, too many people are driving internal combustion engine cars for New Zealand / Aotearoa to reach its' climate targets. Of course this is not suprising because we don't actually have a reliable alternative to driving... yet. That's your job. You will be CEO of the new passenger train company Tranz-Passenger. You must create a network of passenger trains that allows major mode-shift to low carbon train transport for intercity routes. Meanwhile Kiwi Rail will be electrifying the rest of the network so the trains' emissions further decrease!
+We have a bit of a problem, too many people are driving internal combustion engine cars for New Zealand / Aotearoa to reach its' climate targets. Of course this is not surprising because we don't actually have a reliable alternative to driving... yet. That's your job. You will be CEO of the new passenger train company Tranz-Passenger. You must create a network of passenger trains that allows major mode-shift to low carbon train transport for intercity routes. Meanwhile Kiwi Rail will be electrifying the rest of the network so the trains' emissions further decrease!
 
-Here you can see that Transport is our second biggest emitter, something which needs your serious attention! In 2016 the sector emitted almost 15 Gtons, but if you can transport 50,000,000,000pkm/yr this will save about 9 Gtons!
+Here you can see that Transport is our second biggest emitter, something which needs your serious attention!
 
 ^
 
 Objectives:
     1. You must have 70% of towns with railway stations serviced before 2030
     2. You must have 90% of towns with railway stations serviced before 2050
-    3. You must be transporting 20,000,000,000pkm/yr by 2030
-    4. You must be transporting 50,000,000,000pkm/yr by 2050
+    3. You must be transporting 300,000,000pkm/yr by 2030
+    4. You must be transporting 600,000,000pkm/yr by 2050
     
 Any questions? A pkm is a `passenger-kilometre` it means you have transported 1 passenger 1 kilometre (or 2 passengers 500 metres, etc.) Servicing a town means that at least 1 train stops at the town to pickup or drop off passengers, and express train that goes through a town without stopping does not count.
 
-You will be given some initial capital to make your first routes, after that you must re-invest the profit you make from fares. Be careful about how you price your fares, you don't want them so expensive that people don't travel and you can't meet your objectives, or so cheap you go bankrumpt... Either is a fail condition!
+You will be given some initial capital to make your first routes, after that you must re-invest the profit you make from fares. Be careful about how you price your fares, you don't want them so expensive that people don't travel and you can't meet your objectives, or so cheap you go bankrupt... Either is a fail condition!
 
 Ngā mihi,
 The Climate Change Commission, on behalf of the sitting parliament

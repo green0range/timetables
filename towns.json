@@ -3,6 +3,9 @@
     "connections": [
       ["", 0.11833747540964638]
     ],
+    "economic partner": "Lower Hutt",
+    "economic partner": "Upper Hutt",
+    "economic partner": "Porirua",
     "location": [-41.2782914, 174.7793471],
     "population": "212700\n"
   },
@@ -95,6 +98,7 @@
     "connections": [
       ["Hastings", 15.9806541478449]
     ],
+    "economic partner": "Hastings",
     "location": [-39.394387, 176.906592],
     "population": "88000"
   },
@@ -203,6 +207,7 @@
       ["Hamilton", 29.5962326990353],
       ["Auckland", 92]
     ],
+    "economic partner": "Hamilton",
     "location": [-37.5587999, 175.1575741],
     "population": "8030\n"
   },
@@ -266,6 +271,8 @@
     "connections": [
       ["Helensville", 44.9688461146698]
     ],
+    "economic partner": "Helensville",
+    "economic partner": "Wellsford",
     "location": [-36.8462286, 174.7660265],
     "population": "1657000\n"
   },
@@ -287,6 +294,7 @@
     "connections": [
       ["Tauranga", 30.14001156156536]
     ],
+    "economic partner": "Tauranga",
     "location": [-37.781984, 176.321397],
     "population": "8230\n"
   },
@@ -294,6 +302,7 @@
     "connections": [
       ["Hamilton", 10.64568362669556]
     ],
+    "economic partner": "Hamilton",
     "location": [-37.858423, 175.452107],
     "population": "20500\n"
   },
@@ -428,6 +437,7 @@
     "connections": [
       ["Mosgiel", 30.010144703538003]
     ],
+    "economic partner": "Mosgiel",
     "location": [-45.8667, 170.5],
     "population": "128800"
   },
@@ -463,6 +473,7 @@
     "connections": [
       ["Timaru", 75.5]
     ],
+    "economic partner": "Christchurch",
     "location": [-43.9041384, 171.7459328],
     "population": "34800"
   },
@@ -471,6 +482,7 @@
       ["Ashburton", 81.62556570853695],
       ["Darfield", 26.786861248571228]
     ],
+    "economic partner": "Christchurch",
     "location": [-43.596, 172.383],
     "population": "16350"
   },
@@ -485,6 +497,7 @@
     "connections": [
       ["Christchurch", 47.79244733267815]
     ],
+    "economic partner": "Christchurch",
     "location": [-43.3021063, 172.5953314],
     "population": "19250"
   },

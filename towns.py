@@ -305,7 +305,7 @@ class Service:
                         if len(self.earnings_report) > 10:
                             self.earnings_report = self.earnings_report[:5]
                         if wallet.addsubtract(profit, time.strftime("%d/%m/%y"), details=f"running cost of {self.name}"):
-                            print(f"ran service {self.name} at {self.departure_times[i].time()} for ${profit}")
+                            logger.debug(f"ran service {self.name} at {self.departure_times[i].time()} for ${profit}")
                         else:
                             return "F SERVICE COULD NOT RUN BECAUSE YOU COULDN'T AFFORD TO PAY THE STAFF!"
                         # now we need to do the return trip:
@@ -332,7 +332,7 @@ class Service:
                             if len(self.earnings_report_return) > 10:
                                 self.earnings_report_return = self.earnings_report_return[:5]
                             if wallet.addsubtract(profit, time.strftime("%d/%m/%y"), details=f"running cost of {self.name}"):
-                                print(f"ran return service {self.name} at {self.departure_times[i].time()} for ${profit}")
+                                logger.debug(f"ran return service {self.name} at {self.departure_times[i].time()} for ${profit}")
                             else:
                                 return "F SERVICE COULD NOT RUN BECAUSE YOU COULDN'T AFFORD TO PAY THE STAFF!"
                             self.reverse_stations()  # put them back to normal
@@ -559,7 +559,7 @@ class Town:
         return self.coords
 
     def generate_want_to_travels(self):
-        hi = 0.55 * np.sqrt(self.population)
+        hi = 0.6 * np.sqrt(self.population)
         lo = 0.35 * np.sqrt(self.population)
         self.want_to_travel = int(np.round(lo + random.random() * (hi - lo), 0))
 

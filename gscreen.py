@@ -28,7 +28,7 @@ class Score:
 
     def get_lastyear_score(self):
         index = self.year - 2020
-        return self.previous_pkms[index]
+        return np.round(self.previous_pkms[index], 0)
 
     def update_time(self, time):
         if time.year != self.year:
@@ -47,7 +47,7 @@ class Wallet:
         self.account_records = []
 
     def get_balance(self):
-        return self.money
+        return np.round(self.money, 2)
 
     def addsubtract(self, amount, datestr, details="No transaction details recorded"):
         if len(self.account_records) > 20:  # stop using too much memory
@@ -128,6 +128,12 @@ class ServiceColours:
         self.current_number += 1
         return a
 
+    def remove(self, route):
+        for i in range(len(self.routes)):
+            if self.routes[i] is route:
+                self.routes[i] = "DEFUNCT"
+        print(self.routes)
+
 
 def get_sort_key(t):
     return t.population
@@ -181,12 +187,14 @@ class Map:
         self.connection_ids = []
         self.connection_colours = []
         for (col, route) in zip(self.colours.colours, self.colours.routes):
-            startNode = route.stations[0]
-            endNode = route.stations[len(route.stations) - 1]
-            path = startNode.getNodesOnPath(endNode)
-            for i in range(1, len(path)):
-                self.connection_ids.append(path[i - 1].get_name() + '-' + path[i].get_name())
-                self.connection_colours.append(col)
+            if route != "DEFUNCT":
+                startNode = route.stations[0]
+                endNode = route.stations[len(route.stations) - 1]
+                path = startNode.getNodesOnPath(endNode)
+                for i in range(1, len(path)):
+                    self.connection_ids.append(path[i - 1].get_name() + '-' + path[i].get_name())
+                    self.connection_colours.append(col)
+        print(self.connection_colours)
         self.map_image_needs_update = True
         self.redraw()
 
