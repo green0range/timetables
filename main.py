@@ -13,7 +13,7 @@ import gscreen
 import saves
 from towns import Town, Service
 import logging
-import clipboard
+#import clipboard
 import webbrowser
 logger = logging.Logger(name="main")
 
@@ -198,7 +198,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
 
     def get_emissions_plot(self):
-        with open(os.path.join("assets", "emissions_data.json")) as f:
+        with open(os.path.join("assets", "emissions_data.json"), encoding='utf-8') as f:
             data = json.load(f)
         labels = []
         x = []
@@ -222,7 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return QtGui.QPixmap.fromImage(im)
 
     def share(self, btn, message, original_text):
-        clipboard.copy(message)
+        #clipboard.copy(message)
         btn.setText("Copied to clipboard")
         t = QtCore.QTimer()
         t.singleShot(1000, lambda: btn.setText(original_text))
@@ -262,7 +262,7 @@ class MainWindow(QtWidgets.QMainWindow):
         btn_slot2_clear.clicked.connect(lambda: self.delete_save(2, rb_slot2))
         btn_slot3_clear = QtWidgets.QPushButton("Delete Saved Data")
         btn_slot3_clear.clicked.connect(lambda: self.delete_save(3, rb_slot3))
-        with open(os.path.join("assets", "welcome_email.txt"), "r") as f:
+        with open(os.path.join("assets", "welcome_email.txt"), "r", encoding='utf-8') as f:
             intro_txt1, intro_txt2 = f.read().split("^")  # this is where the plot goes
         lbl_message1 = QtWidgets.QLabel(intro_txt1)
         lbl_message1.setFont(QtGui.QFont(font_string2, 8))
@@ -421,7 +421,7 @@ You can find out more about it at https://timetablesgame.nz"""
 
     def create_towns(self):
         file = "towns.json"
-        with open(file, "r") as f:
+        with open(file, "r", encoding='utf-8') as f:
             towns_data = json.load(f)
         connections = []
         for town in towns_data:
@@ -624,7 +624,7 @@ You can find out more about it at https://timetablesgame.nz"""
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     size = app.primaryScreen().size()
-    with open("style.css", "r") as f:
+    with open("style.css", "r", encoding='utf-8') as f:
         app.setStyleSheet(f.read())
     window = MainWindow(scr_size=size)
     window.show()
