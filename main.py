@@ -475,6 +475,7 @@ You can find out more about it at https://timetablesgame.nz"""
         fares = [self.dsb_seat_fare.value(), self.dsb_sleeper_fare.value()]
         self.unconfirmed_service.update(stations, returns, departure_times, days, config, fares)
         self.update_service_dependant_widgets()
+        self.txt_service_name.setPlaceholderText(self.unconfirmed_service.create_name())
 
     def update_service_dependant_widgets(self):
         self.lbl_feedback_1.setText(f"This train will be able to carry a maximum of {self.unconfirmed_service.get_capacity()} passengers, cost ${self.unconfirmed_service.get_up_front_cost()} to build and ${self.unconfirmed_service.get_running_cost()}/journey to run")

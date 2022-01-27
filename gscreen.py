@@ -156,6 +156,8 @@ class Map:
         self.town_draw_name_complete = False
         self.achievement_display_text = ""
         self.achievement_display_counter = 0
+        self.legend_key = []
+        self.legend_colour = []
         '''These represent the bounding latitude and longutiude of the area of the world we want to
             draw. Needs to be altered for each country
             
@@ -247,6 +249,11 @@ class Map:
         else:
             return colours_for_this_connection
 
+    def add_legend(self, key, colour):
+        if not key in self.legend_key:
+            self.legend_key.append(key)
+            self.legend_colour.append(colour)
+
     def redraw(self):
         t = self.game_time.strftime("%d/%m/%Y, %H:%M")
         money = "${:,}".format(self.wallet.get_balance())
@@ -277,6 +284,7 @@ class Map:
                     line_colour = self.get_connection_colour(connection_id)
                     if line_colour is None:
                         draw_map.line((x, y, x2, y2), fill=(200,200,200), width=1)
+                        self.add_legend("Unused track", (200, 200, 200))
                     else:
                         """So we should get the normal vector and draw a colourline at intevals spaced along the normal vecto"""
                         connection_vector = np.array([x-x2, y-y2])
@@ -290,6 +298,9 @@ class Map:
                 x, y = self.convert_latlgn_to_xy(town.get_latlgn())
                 w, h = font.getsize(town.get_name())
                 draw_map.text((x, y-h/2), town.get_name(), font=font, fill=(0, 0, 0, 255))
+            for i, (key, colour) in enumerate(zip(self.legend_key, self.legend_colour)):
+                draw_map.text((100,300+(i*30)), key, font=font, fill=(0, 0, 0, 255))
+                draw_map.rectangle((90,300+(i*30) - 2, 98, 300+(i*30) + 2), colour)
             self.town_draw_name_complete = True  # it will only generate the list (expensive) on first run
         self.img = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
         Image.Image.paste(self.img, self.map_image)
