@@ -17,13 +17,13 @@ class PatronageData:
         sometimes we can just use a random selection of previous data.
 
         When a route is created, it will have an empty PatronageData (PD) object. Call PD.get_run_instance(), if it
-        returns -1, you need to do a full calculation. It will always return -1 if there is not data, as data is added
+        returns -1, you need to do a full calculation. It will always return -1 if there is no data, as data is added
         the chance of returning -1 will decrease, but never be quite 0, so some new data can always be added.
 
-        if a reputation change occurs, call PD.change_reputation(new_reputation) and PD will adjust the weights placed
+        if a reputation change occurs, call PD.update_reputation(new_reputation) and PD will adjust the weights placed
         on old data and be more likely to require recalculations
 
-        The recalc method must calc PD.push_data(seat_on, seat_off, sleeper_on, sleeper_off, total_fares)
+        The recalc method must send new data to PD.push_data(seat_on, seat_off, sleeper_on, sleeper_off, total_fares)
         """
         self.data = []
         self.return_data = []

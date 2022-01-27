@@ -112,7 +112,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.company_reputation = 0.5
 
     def set_view(self, id):
+        """
+        For selecting which island to show on the map screen
+        :param id: either nz, north or south
+        :return: None
+        """
         self.img_map.change_bounding_box(id)
+        self.img_map.redraw()
+        self.update_map_image()
         if id == "nz":
             self.btn_bounding_nz.setChecked(True)
             self.btn_bounding_n.setChecked(False)
@@ -127,6 +134,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_bounding_s.setChecked(True)
 
     def display_achievements(self):
+        """
+        Shows all the achievements on the left panel (instead of the default map). Achievements that are complete
+        will have their title crossed out to indicate they are done
+        :return: None
+        """
         ach_all = self.achievements.get_all_achievements()
         ach_done = self.achievements.get_completed_achievements(self.services[:len(self.services)-1])
         self.close_report()
@@ -148,10 +160,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def skip_year(self):
+        """
+        This should skip one year ahead, but I don't think all the services, passenger numbers and revenue are
+        updated properly when this is run so the skip year button is disabled (27 jan 22) todo: fix
+        :return: None
+        """
         new_year = self.img_map.skip_year()
         self.btn_skip_year.setText(f"Skip to {new_year+1}")
 
     def start_game(self, rb1, rb2, rb3):
+        """
+        Starts the game. This method is called when the start game button is pressed on the menu screen. It
+        sets the save slot, enables all the buttons, removes the menu from the screen and starts the game
+        timer.
+        :param: rb1: the radio button that indicates if slot 1 is selected.
+        :param: rb2: the radio button that indicates if slot 2 is selected.
+        :param: rb3: the radio button that indicates if slot 3 is selected.
+        :return: None
+        """
         self.btn_bounding_nz.setChecked(True)
         slot = None
         if rb1.isChecked():
@@ -198,6 +224,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
 
     def get_emissions_plot(self):
+        """
+        Makes the emissions plot seen in the introduction email on the menu screen.
+        :return: None
+        """
         with open(os.path.join("assets", "emissions_data.json"), encoding='utf-8') as f:
             data = json.load(f)
         labels = []
@@ -222,6 +252,14 @@ class MainWindow(QtWidgets.QMainWindow):
         return QtGui.QPixmap.fromImage(im)
 
     def share(self, btn, message, original_text):
+        """
+        Copies a message to the clipboard. It changes the button to read "copied to clipboard" then changes the
+        text back to the original 1-second later.
+        :param btn: button that called this function
+        :param message: message to copy
+        :param original_text: the original text of the button (what it will be set back to)
+        :return: None
+        """
         #clipboard.copy(message)
         btn.setText("Copied to clipboard")
         t = QtCore.QTimer()
@@ -230,9 +268,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def show_menu(self):
         """
-        Shows the start of game menu, where the user can select which save slot to use sees the instructions
+        Shows the start of game menu, where the user can select which save slot to use and see the instructions
         Note: this reuses the report_widgets array
-        :return:
+        :return: None
         """
         if self.mode_show_map:
             self.mode_show_map = False
@@ -310,6 +348,10 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(scroll_area, 1, 0)
 
     def show_win_screen(self):
+        """
+        This screen should be shown when the player wins the game (gets to 2050 and passes all the checks)
+        :return: None
+        """
         self.timer.stop()  # halt game progress
         if self.mode_show_map:
             self.mode_show_map = False
@@ -328,6 +370,12 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(btn)
 
     def show_fail_screen(self, message):
+        """
+        This screen should be shown if the player fails to meet the 2030 or 2050 requirements or if they run go
+        bankrupt.
+        :param message: The reason the failed the game - this is shown to the play
+        :return: None
+        """
         self.timer.stop()  # halt game progress
         if self.mode_show_map:
             self.mode_show_map = False
@@ -346,6 +394,12 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(btn)
 
     def show_caution(self, message):
+        """
+        Shows a warning to the player, e.g. if they can't afford a new train then use this to show a "not enough money"
+        screen. Unlike the fail and win screens, the player can dismiss the message and it doesn't effect the game.
+        :param message: message to show the player
+        :return: None
+        """
         if self.mode_show_map:
             self.mode_show_map = False
             if self.map_image is not None:
@@ -358,6 +412,11 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(btn)
 
     def tick(self):
+        """
+        This is called every second and updates the map, tests for win conditions, and runs all the services that
+        occured in the last second (which is 1 day in game-time if not on fast-mode)
+        :return:
+        """
         if not self.btn_pause.isChecked():
             win = self.img_map.update_time(self.tick_rate)
             """win will be of form [P/W/F] REASON where P = PASS/PROCEED (do nothing), W = WIN, F = FAIL
@@ -373,6 +432,10 @@ You can find out more about it at https://timetablesgame.nz"""
         self.update_map_image()
 
     def update_map_image(self):
+        """
+        This gets the map image from gscreen.Map and sets it to self.map_image
+        :return: None
+        """
         if self.mode_show_map:
             if self.map_image is None:
                 self.map_image = QtWidgets.QLabel("")
@@ -420,6 +483,10 @@ You can find out more about it at https://timetablesgame.nz"""
         self.lcd_return_time.display(self.unconfirmed_service.get_return_time())
 
     def create_towns(self):
+        """
+        This imports the towns.json file and sets up the towns tree structure. It is called on __init__
+        :return: None
+        """
         file = "towns.json"
         with open(file, "r", encoding='utf-8') as f:
             towns_data = json.load(f)
@@ -446,11 +513,24 @@ You can find out more about it at https://timetablesgame.nz"""
                 pass  # not all towns have economic partners and this is OK!
 
     def get_town_by_name(self, name):
+        """
+        Returns the town object associated with the given name. E.g. get_town_by_name("Ōtaki") will return the
+        towns.Town object representing Ōtaki
+        :param name: name of town (case and macro sensitive)
+        :return: towns.Town object representing the named town or None if not found.
+        """
         for town in self.towns:
             if town.get_name() == name:
                 return town
 
     def fill_intermediate_towns(self, departure_town, arrival_town):
+        """
+        This finds all towns on a train line between two endpoint towns and places them on the intermediate stops
+        panel. The endpoint towns are also placed on the panel pre-ticked and non-changeable.
+        :param departure_town: 1st endpoint
+        :param arrival_town: 2nd endpoint
+        :return: None
+        """
         path = departure_town.getNodesOnPath(arrival_town)
         for town in self.intermediate_towns:
             self.gr_intermediate_stops.removeWidget(town)
@@ -475,6 +555,12 @@ You can find out more about it at https://timetablesgame.nz"""
         self.update_unconfirmed_service()
 
     def cmb_from_selection_changed(self, text):
+        """
+        Called when the combo-box for the departure town is changed. When this happens we need to reassess which towns
+        can be connected to the departure town and update the arrival town combo-box.
+        :param text: text of the combo box, which is just the name of the town
+        :return: None
+        """
         for town in self.towns:
             if town.get_name() == text:
                 all_connected = town.getAllNodes()
@@ -491,6 +577,11 @@ You can find out more about it at https://timetablesgame.nz"""
         self.frm_new_route.setVisible(toggled)
 
     def close_report(self):
+        """
+        Delete everything from the left panel, then sets the flag to show the map (which is the default for when nothing
+        else is using the panel.
+        :return: None
+        """
         for i in reversed(range(self.gr_left.count())):
             self.gr_left.itemAt(i).widget().setParent(None)
         self.mode_show_map = True
@@ -560,6 +651,12 @@ You can find out more about it at https://timetablesgame.nz"""
         self.fill_report_table(table, service.get_stations(), passenger_numbers, earnings)
 
     def delete_service(self, service, widgets):
+        """
+        Removes a train service
+        :param service: the service to remove (towns.Service object)
+        :param widgets: the qtwidget representing that service in the list of services panel
+        :return: None
+        """
         self.company_reputation = self.company_reputation * 0.8  # decrease by 20%
         widgets[0].removeWidget(widgets[1])
         widgets[0].removeWidget(widgets[2])
@@ -583,7 +680,22 @@ You can find out more about it at https://timetablesgame.nz"""
                         self.towns_with_services.append(town)
         self.img_map.update_percent_connected(len(self.towns_with_services) / len(self.towns))
 
+    def marketing(self, service):
+        """
+        Shows the marketing screen, so that the user can make promotes for a particular service, or for train transport
+        generally. Types of marketing should be: TV ads, social media ads, posters, print ads.
+        todo: actually make this
+        :param service: The service to adverise
+        :return:
+        """
+        pass
+
     def update_services_panel(self, service):
+        """
+        Adds a new service to the list of services panel
+        :param service: The new service to add (towns.Service)
+        :return: None
+        """
         frm_service_panel = QtWidgets.QFrame()
         frm_service_panel.setObjectName(f"frm_service_panel{self.colours.get_colour_number(service)}")
         self.img_map.update_connection_ids()
@@ -594,11 +706,14 @@ You can find out more about it at https://timetablesgame.nz"""
         service_panel = QtWidgets.QLabel(service.get_name())
         service_report = QtWidgets.QPushButton("Service Report")
         service_report.clicked.connect(lambda: self.display_report(service))
+        btn_promote = QtWidgets.QPushButton("Promote")
+        btn_promote.clicked.connect(lambda: self.marketing(service))
         service_remove = QtWidgets.QPushButton("Delete")
         service_remove.clicked.connect(lambda: self.delete_service(service, [gr_service_panel, service_panel, service_report, service_remove]))
         gr_service_panel.addWidget(service_panel, len(self.services), 0)
         gr_service_panel.addWidget(service_report, len(self.services), 1)
-        gr_service_panel.addWidget(service_remove, len(self.services), 2)
+        gr_service_panel.addWidget(btn_promote, len(self.services), 2)
+        gr_service_panel.addWidget(service_remove, len(self.services), 3)
         service_panel.show()
 
     def click_confirm_new_route(self):
