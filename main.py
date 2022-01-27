@@ -285,8 +285,8 @@ class MainWindow(QtWidgets.QMainWindow):
         scroll_area.setWidget(frm_menu)
         scroll_area.setObjectName("a")
         lbl_title = QtWidgets.QLabel("TIMETABLES! \n(The train scheduling game)")
-        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
-        font_id2 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf'))
+        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.abspath(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf')))
+        font_id2 = QtGui.QFontDatabase.addApplicationFont(os.path.abspath(os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf')))
         font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
         font_string2 = QtGui.QFontDatabase.applicationFontFamilies(font_id2)[0]
         lbl_title.setFont(QtGui.QFont(font_string1, 20))
