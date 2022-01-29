@@ -235,6 +235,21 @@ class Service:
     def get_name(self):
         return self.name
 
+    def create_name(self):
+        try:
+            if len(self.stations) > 2:
+                if self.returns:
+                    return f"Train between {self.stations[0].get_name()} and {self.stations[len(self.stations) - 1].get_name()}"
+                else:
+                    return f"Train from {self.stations[0].get_name()} to {self.stations[len(self.stations) - 1].get_name()}"
+            else:
+                if self.returns:
+                    return f"Express between {self.stations[0].get_name()} and {self.stations[len(self.stations) - 1].get_name()}"
+                else:
+                    return f"Express from {self.stations[0].get_name()} to {self.stations[len(self.stations) - 1].get_name()}"
+        except IndexError:
+            return "Untitled train"
+
     def confirm_service(self, name, wallet, date):
         """ All services start as unconfirmed, so that the user can test route, alter carriages, etc.
             This method """
@@ -245,16 +260,7 @@ class Service:
             self.confirmed = True
             self.name = name
             if self.name == "":
-                if len(self.stations) > 2:
-                    if self.returns:
-                        self.name = f"Train between {self.stations[0].get_name()} and {self.stations[len(self.stations)-1].get_name()}"
-                    else:
-                        self.name = f"Train from {self.stations[0].get_name()} to {self.stations[len(self.stations)-1].get_name()}"
-                else:
-                    if self.returns:
-                        self.name = f"Express between {self.stations[0].get_name()} and {self.stations[len(self.stations)-1].get_name()}"
-                    else:
-                        self.name = f"Express from {self.stations[0].get_name()} to {self.stations[len(self.stations)-1].get_name()}"
+                self.name = self.create_name()
             self.passenger_confidence = 0.1 + random.random() * (0.3 - 0.1)  # start at random between 10% and 30%
             return "PASS"
 
