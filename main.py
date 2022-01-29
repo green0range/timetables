@@ -37,9 +37,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gr_left.setAlignment(QtCore.Qt.AlignTop)
         self.map_image = None
         ''' get some fonts'''
-        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
+        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.abspath(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf')))
         font_id2 = QtGui.QFontDatabase.addApplicationFont(
-            os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf'))
+            os.path.abspath(os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf')))
         self.title_font = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
         self.message_font = QtGui.QFontDatabase.applicationFontFamilies(font_id2)[0]
         ''' Now we are connecting signals with slots'''
@@ -473,6 +473,7 @@ You can find out more about it at https://timetablesgame.nz"""
         fares = [self.dsb_seat_fare.value(), self.dsb_sleeper_fare.value()]
         self.unconfirmed_service.update(stations, returns, departure_times, days, config, fares)
         self.update_service_dependant_widgets()
+        self.txt_service_name.setPlaceholderText(self.unconfirmed_service.create_name())
 
     def update_service_dependant_widgets(self):
         self.lbl_feedback_1.setText(f"This train will be able to carry a maximum of {self.unconfirmed_service.get_capacity()} passengers, cost ${self.unconfirmed_service.get_up_front_cost()} to build and ${self.unconfirmed_service.get_running_cost()}/journey to run")
