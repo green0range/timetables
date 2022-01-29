@@ -36,6 +36,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gr_left = QtWidgets.QGridLayout(self.frm_map)
         self.gr_left.setAlignment(QtCore.Qt.AlignTop)
         self.map_image = None
+        ''' get some fonts'''
+        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
+        font_id2 = QtGui.QFontDatabase.addApplicationFont(
+            os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf'))
+        self.title_font = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
+        self.message_font = QtGui.QFontDatabase.applicationFontFamilies(font_id2)[0]
         ''' Now we are connecting signals with slots'''
         self.btn_new_route.clicked.connect(self.clicked_new_route)
         self.frm_new_route.setVisible(False)
@@ -285,11 +291,7 @@ class MainWindow(QtWidgets.QMainWindow):
         scroll_area.setWidget(frm_menu)
         scroll_area.setObjectName("a")
         lbl_title = QtWidgets.QLabel("TIMETABLES! \n(The train scheduling game)")
-        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
-        font_id2 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf'))
-        font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
-        font_string2 = QtGui.QFontDatabase.applicationFontFamilies(font_id2)[0]
-        lbl_title.setFont(QtGui.QFont(font_string1, 20))
+        lbl_title.setFont(QtGui.QFont(self.title_font, 20))
         rb_slot1 = QtWidgets.QRadioButton("Slot 1 - "+self.save_manager.get_save_time(1))
         rb_slot1.setChecked(True)
         rb_slot2 = QtWidgets.QRadioButton("Slot 2 - "+self.save_manager.get_save_time(2))
@@ -303,12 +305,12 @@ class MainWindow(QtWidgets.QMainWindow):
         with open(os.path.join("assets", "welcome_email.txt"), "r", encoding='utf-8') as f:
             intro_txt1, intro_txt2 = f.read().split("^")  # this is where the plot goes
         lbl_message1 = QtWidgets.QLabel(intro_txt1)
-        lbl_message1.setFont(QtGui.QFont(font_string2, 8))
+        lbl_message1.setFont(QtGui.QFont(self.message_font, 8))
         lbl_message1.setWordWrap(True)
         lbl_plot = QtWidgets.QLabel("")
         lbl_plot.setPixmap(self.get_emissions_plot())
         lbl_message2 = QtWidgets.QLabel(intro_txt2)
-        lbl_message2.setFont(QtGui.QFont(font_string2, 8))
+        lbl_message2.setFont(QtGui.QFont(self.message_font, 8))
         lbl_message2.setWordWrap(True)
         cmb_difficulty = QtWidgets.QComboBox()
         cmb_difficulty.addItems(["Normal difficulty"])
@@ -358,10 +360,8 @@ You can find out more about it at https://timetablesgame.nz"""
             if self.map_image is not None:
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
-        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
-        font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
         lbl_game_over = QtWidgets.QLabel("SUCCESS!")
-        lbl_game_over.setFont(QtGui.QFont(font_string1, 20))
+        lbl_game_over.setFont(QtGui.QFont(self.title_font, 20))
         lbl = QtWidgets.QLabel("You won! Ngā mihi nui for building our public transport network!")
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
@@ -382,10 +382,8 @@ You can find out more about it at https://timetablesgame.nz"""
             if self.map_image is not None:
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
-        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'))
-        font_string1 = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
         lbl_game_over = QtWidgets.QLabel("GAME OVER!")
-        lbl_game_over.setFont(QtGui.QFont(font_string1, 20))
+        lbl_game_over.setFont(QtGui.QFont(self.title_font, 20))
         lbl = QtWidgets.QLabel(message)
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
@@ -684,11 +682,118 @@ You can find out more about it at https://timetablesgame.nz"""
         """
         Shows the marketing screen, so that the user can make promotes for a particular service, or for train transport
         generally. Types of marketing should be: TV ads, social media ads, posters, print ads.
-        todo: actually make this
         :param service: The service to adverise
         :return:
         """
-        pass
+        self.close_report()
+        if self.mode_show_map:
+            self.mode_show_map = False
+            if self.map_image is not None:
+                self.gr_left.removeWidget(self.map_image)
+                self.map_image = None
+        lbl_title = QtWidgets.QLabel("Promote your train services")
+        lbl_title.setFont(QtGui.QFont(self.title_font, 20))
+        lbl1 = QtWidgets.QLabel("Campaign type:")
+        scr_campaign_options = QtWidgets.QScrollArea()
+        scr_campaign_options.setMinimumSize(700, 500)
+        grscr_campaign_options = QtWidgets.QGridLayout(scr_campaign_options)
+        cmb_campaign = QtWidgets.QComboBox()
+        cmb_campaign.addItems(["Nostalgic New Zealand Railways poster", "Television Advertisement",
+                               "Radio Advertisement", "Social Media Advertisement", "Print Media Advertisement"])
+        cmb_campaign.currentTextChanged.connect(lambda: self.marketing_select_campaign(cmb_campaign, grscr_campaign_options))
+        self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
+        self.gr_left.addWidget(lbl1, 1, 0)
+        self.gr_left.addWidget(cmb_campaign, 1, 1)
+        self.gr_left.addWidget(scr_campaign_options, 2, 0, 1, 2)
+        self.marketing_select_campaign(cmb_campaign, grscr_campaign_options)
+
+    def marketing_poster_selection_change(self, img_lbl, image_path, lbl_descript, new_descript):
+        image = QtGui.QImage(image_path)
+        img_lbl.setPixmap(QtGui.QPixmap.fromImage(image))
+        lbl_descript.setText(new_descript)
+
+    def marketing_select_campaign(self, cmb_campaign, grid):
+        btn_close = QtWidgets.QPushButton("Close")
+        btn_close.clicked.connect(self.close_report)
+        btn_buy_campaign = QtWidgets.QPushButton("Buy Advertisement Campaign")
+        for i in reversed(range(grid.count())):
+            grid.itemAt(i).widget().setParent(None)
+        if cmb_campaign.currentText() == "Nostalgic New Zealand Railways poster":
+            path = os.path.join("assets", "old_NZR_posters")
+            posters = []
+            with open(os.path.join(path, "data.json"), "r", encoding="utf-8") as f:
+                poster_data = json.load(f)
+            for file in os.listdir(path):
+                name, extension = file.split(".")
+                if extension == "jpg":
+                    posters.append(name)
+            cmb_poster = QtWidgets.QComboBox()
+            cmb_poster.addItems(posters)
+            lbl_select_poster = QtWidgets.QLabel("Select Poster:")
+            lbl_poster_image = QtWidgets.QLabel("")
+            lbl_description = QtWidgets.QLabel(f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']}")
+            cmb_poster.currentTextChanged.connect(lambda: self.marketing_poster_selection_change(lbl_poster_image,
+                                                                                      os.path.join(path, cmb_poster.currentText()),
+                                                                                      lbl_description,
+                                                                                      f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']} \nPosters will be displayed in {poster_data[cmb_poster.currentText()]['putsPostersText']} \nCampaign cost: ${poster_data[cmb_poster.currentText()]['cost']}"))
+            self.marketing_poster_selection_change(lbl_poster_image, os.path.join(path, cmb_poster.currentText()),
+                                                   lbl_description,
+                                                   f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']} \nPosters will be displayed in {poster_data[cmb_poster.currentText()]['putsPostersText']} \nCampaign cost: ${poster_data[cmb_poster.currentText()]['cost']}")
+            grid.addWidget(lbl_select_poster, 2, 0)
+            grid.addWidget(cmb_poster, 2, 1)
+            grid.addWidget(lbl_poster_image, 3, 0, 1, 2)
+            grid.addWidget(lbl_description, 4, 0, 1, 2)
+        elif cmb_campaign.currentText() == "Television Advertisement":
+            cmb_service_to_promote = QtWidgets.QComboBox()
+            list_of_services_named = ['Tranz-Passenger company (All services)']
+            for s in self.services:
+                if s.confirmed:
+                    list_of_services_named.append(s.get_name())
+            cmb_service_to_promote.addItems(list_of_services_named)
+            lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
+            grid.addWidget(lbl_select_service, 2, 0)
+            grid.addWidget(cmb_service_to_promote, 2, 1)
+        elif cmb_campaign.currentText() == "Radio Advertisement":
+            cmb_service_to_promote = QtWidgets.QComboBox()
+            list_of_services_named = ['Tranz-Passenger company (All services)']
+            for s in self.services:
+                if s.confirmed:
+                    list_of_services_named.append(s.get_name())
+            cmb_service_to_promote.addItems(list_of_services_named)
+            lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
+            grid.addWidget(lbl_select_service, 2, 0)
+            grid.addWidget(cmb_service_to_promote, 2, 1)
+        elif cmb_campaign.currentText() == "Social Media Advertisement":
+            cmb_service_to_promote = QtWidgets.QComboBox()
+            list_of_services_named = ['Tranz-Passenger company (All services)']
+            for s in self.services:
+                if s.confirmed:
+                    list_of_services_named.append(s.get_name())
+            cmb_service_to_promote.addItems(list_of_services_named)
+            lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
+            lbl_demographic = QtWidgets.QLabel("Select target demographic:")
+            cmb_demographic = QtWidgets.QComboBox()
+            cmb_demographic.addItems(['business travelers', 'under 30s', 'families', 'holiday makers',
+                                      'environmentally conscious travelers', 'retired people'])
+            grid.addWidget(lbl_select_service, 2, 0)
+            grid.addWidget(cmb_service_to_promote, 2, 1)
+            grid.addWidget(lbl_demographic, 3, 0)
+            grid.addWidget(cmb_demographic, 3, 1)
+        elif cmb_campaign.currentText() == "Print Media Advertisement":
+            cmb_service_to_promote = QtWidgets.QComboBox()
+            list_of_services_named = ['Tranz-Passenger company (All services)']
+            for s in self.services:
+                if s.confirmed:
+                    list_of_services_named.append(s.get_name())
+            cmb_service_to_promote.addItems(list_of_services_named)
+            lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
+            grid.addWidget(lbl_select_service, 2, 0)
+            grid.addWidget(cmb_service_to_promote, 2, 1)
+        grid.addWidget(btn_close, 10, 1)
+        grid.addWidget(btn_buy_campaign, 10, 0)
+
+
+
 
     def update_services_panel(self, service):
         """

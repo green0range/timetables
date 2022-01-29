@@ -1,0 +1,26 @@
+{
+  "CheapTrains": {
+    "target": "everywhere",
+    "putsPosters": "everywhere",
+    "putsPostersText": "everywhere",
+    "cost": 10000
+  },
+  "FranzJosef": {
+    "target": "Hokitika",
+    "putsPosters": ["Christchurch", "Greymouth"],
+    "putsPostersText": "Christchurch and Greymouth",
+    "cost": 2000
+  },
+  "WaitomoCaves": {
+    "target": "Hangatiki",
+    "putsPosters": ["Hamilton", "Auckland", "Wellington", "New Plymouth"],
+    "putsPostersText": "Hamilton, Auckland, Wellington and New Plymouth",
+    "cost": 4000
+  },
+  "Whanganui": {
+    "target": "Whanganui",
+    "putsPosters": ["New Plymouth", "Wellington", "Palmerston North"],
+    "putsPostersText": "New Plymouth, Wellington and Palmerston North",
+    "cost": 3000
+  }
+}

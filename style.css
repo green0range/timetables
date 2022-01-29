@@ -13,6 +13,14 @@ QPushButton::disabled {
     color: #B2B2B2;
 }
 
+QComboBox {
+    color: black;
+}
+
+QCheckBox {
+    color: black;
+}
+
 QPushButton::checked {
     border: 1px solid #BBBBBB;
     border-radius: 1px;
@@ -42,6 +50,7 @@ QLabel {
     border-radius: 4px;
     padding: 0px;
     background-color: #FFFFFF;
+    color: #000000;
 }
 
 QFrame#frm_service_panel0 {
