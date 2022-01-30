@@ -22,5 +22,29 @@
     "putsPosters": ["New Plymouth", "Wellington", "Palmerston North"],
     "putsPostersText": "New Plymouth, Wellington and Palmerston North",
     "cost": 3000
+  },
+  "NationalPark": {
+    "target": "National Park Village",
+    "putsPosters": ["Auckland", "Hamilton", "Palmerston North", "Wellington"],
+    "putsPostersText": "Auckland, Hamilton, Palmy and Wellington",
+    "cost": 4000
+  },
+  "SchoolHolidays": {
+    "target": "everywhere",
+    "putsPosters": "everywhere",
+    "putsPostersText": "everywhere",
+    "cost": 10000
+  },
+  "railways-silver-star": {
+    "target": "Auckland-Wellington (sleeper only)",
+    "putsPosters": ["Auckland", "Wellington"],
+    "putsPostersText": "Auckland and Wellington",
+    "cost": 2000
+  },
+  "south-island-express": {
+    "target": "Christchurch-Invercargill (express only)",
+    "putsPosters": ["Christchurch", "Invercargill"],
+    "putsPostersText": "Christchurch and Invercargill",
+    "cost": 2000
   }
 }

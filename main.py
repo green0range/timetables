@@ -10,6 +10,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 import achievements
 import gscreen
+import promotions
 import saves
 from towns import Town, Service
 import logging
@@ -698,6 +699,7 @@ You can find out more about it at https://timetablesgame.nz"""
         scr_campaign_options = QtWidgets.QScrollArea()
         scr_campaign_options.setMinimumSize(700, 500)
         grscr_campaign_options = QtWidgets.QGridLayout(scr_campaign_options)
+        grscr_campaign_options.setAlignment(QtCore.Qt.AlignTop)
         cmb_campaign = QtWidgets.QComboBox()
         cmb_campaign.addItems(["Nostalgic New Zealand Railways poster", "Television Advertisement",
                                "Radio Advertisement", "Social Media Advertisement", "Print Media Advertisement"])
@@ -719,7 +721,12 @@ You can find out more about it at https://timetablesgame.nz"""
         btn_buy_campaign = QtWidgets.QPushButton("Buy Advertisement Campaign")
         for i in reversed(range(grid.count())):
             grid.itemAt(i).widget().setParent(None)
+        ad_info = {}
         if cmb_campaign.currentText() == "Nostalgic New Zealand Railways poster":
+            about = "An intern found these old posters in a dusty draw! We will pin them up around town and leave " \
+                    "them there until someone rips them off or vandalises them."
+            lbl_about = QtWidgets.QLabel(about)
+            lbl_about.setWordWrap(True)
             path = os.path.join("assets", "old_NZR_posters")
             posters = []
             with open(os.path.join(path, "data.json"), "r", encoding="utf-8") as f:
@@ -730,6 +737,7 @@ You can find out more about it at https://timetablesgame.nz"""
                     posters.append(name)
             cmb_poster = QtWidgets.QComboBox()
             cmb_poster.addItems(posters)
+            cmb_poster.setCurrentText("FranzJosef")  # This is the default entirely because I am writing this in Franz, and it is my personal favourite!
             lbl_select_poster = QtWidgets.QLabel("Select Poster:")
             lbl_poster_image = QtWidgets.QLabel("")
             lbl_description = QtWidgets.QLabel(f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']}")
@@ -740,11 +748,21 @@ You can find out more about it at https://timetablesgame.nz"""
             self.marketing_poster_selection_change(lbl_poster_image, os.path.join(path, cmb_poster.currentText()),
                                                    lbl_description,
                                                    f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']} \nPosters will be displayed in {poster_data[cmb_poster.currentText()]['putsPostersText']} \nCampaign cost: ${poster_data[cmb_poster.currentText()]['cost']}")
-            grid.addWidget(lbl_select_poster, 2, 0)
-            grid.addWidget(cmb_poster, 2, 1)
-            grid.addWidget(lbl_poster_image, 3, 0, 1, 2)
-            grid.addWidget(lbl_description, 4, 0, 1, 2)
+            grid.addWidget(lbl_about, 2, 0, 1, 2)
+            grid.addWidget(lbl_select_poster, 3, 0)
+            grid.addWidget(cmb_poster, 3, 1)
+            grid.addWidget(lbl_poster_image, 4, 0, 1, 2)
+            grid.addWidget(lbl_description, 5, 0, 1, 2)
+            ad_info = {
+                "type": "poster",
+                "posterData": poster_data,
+                "cmb_poster": cmb_poster
+            }
         elif cmb_campaign.currentText() == "Television Advertisement":
+            about = "TV ads are broadcast across the motu at the selected times for 2 weeks from the start of the " \
+                    "campaign."
+            lbl_about = QtWidgets.QLabel(about)
+            lbl_about.setWordWrap(True)
             cmb_service_to_promote = QtWidgets.QComboBox()
             list_of_services_named = ['Tranz-Passenger company (All services)']
             for s in self.services:
@@ -752,9 +770,32 @@ You can find out more about it at https://timetablesgame.nz"""
                     list_of_services_named.append(s.get_name())
             cmb_service_to_promote.addItems(list_of_services_named)
             lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
-            grid.addWidget(lbl_select_service, 2, 0)
-            grid.addWidget(cmb_service_to_promote, 2, 1)
+            lbl_when = QtWidgets.QLabel("When should the ad be broadcast? (You can select more than one)")
+            ck_7am = QtWidgets.QCheckBox("7 am ($70,000)")
+            ck_noon = QtWidgets.QCheckBox("Noon ($40,000)")
+            ck_6pm = QtWidgets.QCheckBox("6 pm ($140,000)")
+            ck_9pm = QtWidgets.QCheckBox("9 pm ($100,000)")
+            grid.addWidget(lbl_when, 3, 0, 1, 2)
+            grid.addWidget(ck_7am, 4, 0)
+            grid.addWidget(ck_noon, 4, 1)
+            grid.addWidget(ck_6pm, 5, 0)
+            grid.addWidget(ck_9pm, 5, 1)
+            grid.addWidget(lbl_about, 2, 0, 1, 2)
+            grid.addWidget(lbl_select_service, 6, 0)
+            grid.addWidget(cmb_service_to_promote, 6, 1)
+            ad_info = {
+                "type": "tv",
+                "ck_7am": ck_7am,
+                "ck_noon": ck_noon,
+                "ck_6pm": ck_6pm,
+                "ck_9pm": ck_9pm,
+                "cmb_service": cmb_service_to_promote
+            }
         elif cmb_campaign.currentText() == "Radio Advertisement":
+            about = "Radio ads are like TV ads but cheaper and less effective. A campaign will be broadcast " \
+                    "for two weeks at the selected times."
+            lbl_about = QtWidgets.QLabel(about)
+            lbl_about.setWordWrap(True)
             cmb_service_to_promote = QtWidgets.QComboBox()
             list_of_services_named = ['Tranz-Passenger company (All services)']
             for s in self.services:
@@ -762,9 +803,33 @@ You can find out more about it at https://timetablesgame.nz"""
                     list_of_services_named.append(s.get_name())
             cmb_service_to_promote.addItems(list_of_services_named)
             lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
-            grid.addWidget(lbl_select_service, 2, 0)
-            grid.addWidget(cmb_service_to_promote, 2, 1)
+            lbl_when = QtWidgets.QLabel("When should the ad be broadcast? (You can select more than one)")
+            ck_7am = QtWidgets.QCheckBox("7 am ($30,000)")
+            ck_noon = QtWidgets.QCheckBox("Noon ($20,000)")
+            ck_6pm = QtWidgets.QCheckBox("6 pm ($50,000)")
+            ck_9pm = QtWidgets.QCheckBox("9 pm ($40,000)")
+            grid.addWidget(lbl_when, 3, 0, 1, 2)
+            grid.addWidget(ck_7am, 4, 0)
+            grid.addWidget(ck_noon, 4, 1)
+            grid.addWidget(ck_6pm, 5, 0)
+            grid.addWidget(ck_9pm, 5, 1)
+            grid.addWidget(lbl_about, 2, 0, 1, 2)
+            grid.addWidget(lbl_select_service, 6, 0)
+            grid.addWidget(cmb_service_to_promote, 6, 1)
+            ad_info = {
+                "type": "radio",
+                "ck_7am": ck_7am,
+                "ck_noon": ck_noon,
+                "ck_6pm": ck_6pm,
+                "ck_9pm": ck_9pm,
+                "cmb_service": cmb_service_to_promote
+            }
         elif cmb_campaign.currentText() == "Social Media Advertisement":
+            about = "Social media ads can be targeted at specific demographics. At Tranz-passenger, we aim to serve " \
+                    "all demographics so this feature isn't actually useful. You can also target based the location " \
+                    "the user is logging in from, which could be useful!"
+            lbl_about = QtWidgets.QLabel(about)
+            lbl_about.setWordWrap(True)
             cmb_service_to_promote = QtWidgets.QComboBox()
             list_of_services_named = ['Tranz-Passenger company (All services)']
             for s in self.services:
@@ -774,13 +839,25 @@ You can find out more about it at https://timetablesgame.nz"""
             lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
             lbl_demographic = QtWidgets.QLabel("Select target demographic:")
             cmb_demographic = QtWidgets.QComboBox()
-            cmb_demographic.addItems(['business travelers', 'under 30s', 'families', 'holiday makers',
-                                      'environmentally conscious travelers', 'retired people'])
-            grid.addWidget(lbl_select_service, 2, 0)
-            grid.addWidget(cmb_service_to_promote, 2, 1)
-            grid.addWidget(lbl_demographic, 3, 0)
-            grid.addWidget(cmb_demographic, 3, 1)
+            cmb_demographic.addItems(['no demographic targeting', 'business travelers', 'under 30s', 'families',
+                                      'holiday makers', 'environmentally conscious travelers', 'retired people'])
+            ck_target_location = QtWidgets.QCheckBox("Only target people in towns where the selected service stops.")
+            grid.addWidget(lbl_about, 2, 0, 1, 2)
+            grid.addWidget(lbl_select_service, 3, 0)
+            grid.addWidget(cmb_service_to_promote, 3, 1)
+            grid.addWidget(lbl_demographic, 4, 0)
+            grid.addWidget(cmb_demographic, 4, 1)
+            grid.addWidget(ck_target_location, 5, 0, 1, 2)
+            ad_info = {
+                "type": "social media",
+                "cmb_demographic": cmb_demographic,
+                "ck_target_location": ck_target_location
+            }
         elif cmb_campaign.currentText() == "Print Media Advertisement":
+            about = "This puts an ad in newspapers and magazines. You can choose to only put ads in local papers, or " \
+                    "nationwide. It costs $60,000 for all newspapers, or $10,000 to just target local papers."
+            lbl_about = QtWidgets.QLabel(about)
+            lbl_about.setWordWrap(True)
             cmb_service_to_promote = QtWidgets.QComboBox()
             list_of_services_named = ['Tranz-Passenger company (All services)']
             for s in self.services:
@@ -788,11 +865,30 @@ You can find out more about it at https://timetablesgame.nz"""
                     list_of_services_named.append(s.get_name())
             cmb_service_to_promote.addItems(list_of_services_named)
             lbl_select_service = QtWidgets.QLabel("Select Service to promote:")
-            grid.addWidget(lbl_select_service, 2, 0)
-            grid.addWidget(cmb_service_to_promote, 2, 1)
+            ck_target_location = QtWidgets.QCheckBox("Only place ads in papers local to the selected service")
+            grid.addWidget(lbl_about, 2, 0, 1, 2)
+            grid.addWidget(lbl_select_service, 3, 0)
+            grid.addWidget(cmb_service_to_promote, 3, 1)
+            grid.addWidget(ck_target_location, 4, 0, 1, 2)
+            ad_info = {
+                "type": "print media",
+                "ck_target_location": ck_target_location
+            }
+        btn_buy_campaign.clicked.connect(lambda: self.buy_campaign(ad_info))
         grid.addWidget(btn_close, 10, 1)
         grid.addWidget(btn_buy_campaign, 10, 0)
 
+    def buy_campaign(self, info):
+        if info['type'] == 'poster':
+            selection = info['cmb_poster'].currentText()
+            target_town = info['posterData'][selection]['target']
+            cost = info['posterData'][selection]['cost']
+            puts_posters = info['posterData'][selection]['putsPosters']
+            promo = promotions.Promotion()
+            response = promo.add_poster_promotion(target_town, puts_posters, self.img_map.get_time(), self.services[:len(self.services)-1])
+            self.close_report()
+            if response[0] == "C":
+                self.show_caution(response[0:])
 
 
 

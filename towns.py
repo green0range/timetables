@@ -31,6 +31,12 @@ class PatronageData:
         self.return_weights = []
         self.chance_of_recalc = 1
         self.company_reputation = 0.5
+        self.seat_capacity = 0
+        self.sleeper_capacity = 0
+
+    def set_capacity(self, seat, sleeper):
+        self.seat_capacity = seat
+        self.sleeper_capacity = sleeper
 
     def update_reputation(self, reputation):
         if reputation != self.company_reputation:
@@ -49,16 +55,37 @@ class PatronageData:
                 self.return_weights[i] /= 3  # sets all weights to 1/3rd of original value
             self.chance_of_recalc += 0.7
 
-    def get_run_instance(self, is_return):
+    def get_run_instance(self, is_return, promos, stations):
         if self.chance_of_recalc >= 1:
             return -1
         if random.random() < self.chance_of_recalc:
             return -1
         try:
+            pweights1 = np.zeros(len(stations))
+            pweights2 = np.zeros(len(stations))
+            num_ons = 1
+            for p in promos:
+                w1, w2, num_ons = p.get_weights_increase(stations)
+                pweights1 += w1
+                pweights2 += w2
             if is_return:
                 choice = random.choices(self.return_data, self.return_weights, k=1)[0]
             else:
                 choice = random.choices(self.data, self.weights, k=1)[0]
+                if len(promos) > 0:
+                    seat_travelers = np.sum(choice[0])
+                    sleep_travelers = np.sum(choice[2])
+                    assert self.seat_capacity - seat_travelers > 0  # there is a bug here somewhere as this fails sometimes.
+                    traveler_increase_seat = np.minimum(seat_travelers*0.4, self.seat_capacity - seat_travelers)
+                    traveler_increase_sleeper = np.minimum(sleep_travelers*0.4, self.sleeper_capacity - sleep_travelers)
+                    seat_increase = np.round((pweights1*traveler_increase_seat)/num_ons, 0)
+                    sleep_increase = np.round((pweights1*traveler_increase_sleeper)/num_ons, 0)
+                    print(f"{seat_increase}, {sleep_increase}")
+                    choice[0] = choice[0] + seat_increase
+                    choice[2] = choice[2] + sleep_increase
+                    choice[1] = choice[1] + pweights2 * np.sum(seat_increase)
+                    choice[3] = choice[3] + pweights2 * np.sum(sleep_increase)
+
             logger.debug(f"PatronageData selected {choice}")
             return choice
         except IndexError:  # this error occurred in testing, but I don't know why
@@ -113,7 +140,7 @@ class Service:
         self.days = [False, False, False, False, False, False, False]
         self.config = [1, 0, 0, 0, 0]
         self.fares = [0, 0]
-        self.average_speed = 95  #km/h
+        self.average_speed = 90  #km/h
         self.editable = True
         self.passenger_confidence = 0  # 0 - 1, increases over time if everything runs, decreases if delays occur.
         # Note: for reports, the most recent journey is in array position 0
@@ -121,6 +148,10 @@ class Service:
         self.passenger_numbers_report_return = []
         self.earnings_report = []  # [[profitN, datetime_of_journeyN], ... [profit1, ...]]
         self.earnings_report_return = []
+        self.promotions = []
+
+    def register_promotion(self, promo):
+        self.promotions.append(promo)
 
     def get_passenger_numbers_report(self, returns_report=False):
         if returns_report:
@@ -262,6 +293,7 @@ class Service:
             if self.name == "":
                 self.name = self.create_name()
             self.passenger_confidence = 0.1 + random.random() * (0.3 - 0.1)  # start at random between 10% and 30%
+            self.pd.set_capacity(self.car_capacity['passenger car']*self.config[1], self.car_capacity['sleeper car']*self.config[2])
             return "PASS"
 
     def run(self, increment, time, wallet, score, company_reputation):
@@ -294,7 +326,7 @@ class Service:
                     for i in range(first_departure, len(self.departure_times)):
                         ''' Calculating patronage is computationally expensive, so we do it for the first week of the
                             service running and record the results, then '''
-                        run_instance = self.pd.get_run_instance(False)
+                        run_instance = self.pd.get_run_instance(False, self.promotions, self.get_stations())
                         if run_instance == -1:
                             profit = self.calculate_patronage(self.departure_times[i].time(), t.weekday(), score, time_0.date(), company_reputation)
                         else:
@@ -320,7 +352,7 @@ class Service:
                             return_time = self.departure_times[i]
                             return_time += self.get_journey_length(0, len(self.stations)-1)
                             return_time += datetime.timedelta(minutes=10)
-                            run_instance = self.pd.get_run_instance(True)
+                            run_instance = self.pd.get_run_instance(True, self.promotions, self.get_stations())
                             if run_instance == -1:
                                 profit = self.calculate_patronage(return_time.time(), t.weekday(), score,
                                                                   time_0.date(), company_reputation, is_return=True)
@@ -526,7 +558,7 @@ class Service:
         # assign passenger numbers on and off at each town
         # increase passenger numbers by boost factor if going between economic partners
         """ This is quite a complicated system so I want to have lots of checks!"""
-        do_checks = False
+        do_checks = True
         if do_checks:
             assert off_seat[0] == 0  # nobody can get off at the first stop because nobody is on the train yet
             assert on_seat[len(on_seat) - 1] == 0  # nobody on at the last stop. (Returns run a new instance)
