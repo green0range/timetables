@@ -2,6 +2,7 @@ import datetime
 import logging
 import random
 import sys
+from copy import copy
 
 import numpy as np
 logging.basicConfig(stream=sys.stdout,
@@ -65,17 +66,17 @@ class PatronageData:
             pweights2 = np.zeros(len(stations))
             num_ons = 1
             for p in promos:
-                w1, w2, num_ons = p.get_weights_increase(stations)
+                w1, target_index, num_ons = p.get_weights_increase(stations)
                 pweights1 += w1
-                pweights2 += w2
+                pweights2[target_index] = 1
             if is_return:
                 choice = random.choices(self.return_data, self.return_weights, k=1)[0]
             else:
                 choice = random.choices(self.data, self.weights, k=1)[0]
                 if len(promos) > 0:
-                    seat_travelers = np.sum(choice[0])
-                    sleep_travelers = np.sum(choice[2])
-                    assert self.seat_capacity - seat_travelers > 0  # there is a bug here somewhere as this fails sometimes.
+                    seat_travelers = choice[1][target_index]
+                    sleep_travelers = choice[3][target_index]
+                    assert self.seat_capacity - seat_travelers > 0
                     traveler_increase_seat = np.minimum(seat_travelers*0.4, self.seat_capacity - seat_travelers)
                     traveler_increase_sleeper = np.minimum(sleep_travelers*0.4, self.sleeper_capacity - sleep_travelers)
                     seat_increase = np.round((pweights1*traveler_increase_seat)/num_ons, 0)
@@ -85,7 +86,6 @@ class PatronageData:
                     choice[2] = choice[2] + sleep_increase
                     choice[1] = choice[1] + pweights2 * np.sum(seat_increase)
                     choice[3] = choice[3] + pweights2 * np.sum(sleep_increase)
-
             logger.debug(f"PatronageData selected {choice}")
             return choice
         except IndexError:  # this error occurred in testing, but I don't know why
@@ -161,12 +161,11 @@ class Service:
     def get_stations(self):
         """ This must always return the stations in the correct order, even if they are reversed internally!"""
         if self.stations_reversed:
-            self.stations.reverse()  # make it the correct order
-            my_return = self.stations
-            self.stations.reverse()  # reverse it again for internal use
+            my_return = copy(self.stations)
+            my_return.reverse()
             return my_return
         else:
-            return self.stations
+            return copy(self.stations)
 
     def reverse_stations(self):
         """ Important: do not use self.stations.reverse(), use this method, because we need to set a reversed
