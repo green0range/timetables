@@ -132,7 +132,6 @@ class ServiceColours:
         for i in range(len(self.routes)):
             if self.routes[i] is route:
                 self.routes[i] = "DEFUNCT"
-        print(self.routes)
 
 
 def get_sort_key(t):
@@ -196,7 +195,6 @@ class Map:
                 for i in range(1, len(path)):
                     self.connection_ids.append(path[i - 1].get_name() + '-' + path[i].get_name())
                     self.connection_colours.append(col)
-        print(self.connection_colours)
         self.map_image_needs_update = True
         self.redraw()
 

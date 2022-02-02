@@ -34,6 +34,8 @@ class PatronageData:
         self.company_reputation = 0.5
         self.seat_capacity = 0
         self.sleeper_capacity = 0
+        self.price_per_station_seat = 1
+        self.price_per_station_sleep = 2
 
     def set_capacity(self, seat, sleeper):
         self.seat_capacity = seat
@@ -57,35 +59,64 @@ class PatronageData:
             self.chance_of_recalc += 0.7
 
     def get_run_instance(self, is_return, promos, stations):
+        """ Promotions are added here because it is faster and easier than doing a complete recalc of the patronage,
+            this means promotions will only take effect some of the time as there is always a chance of doing a recalc,
+            however this is fine as on average, the route will run with the promotion. It also increases the randomness
+            of how the promotion will be perceived which is more realistic anyway.
+        """
         if self.chance_of_recalc >= 1:
             return -1
         if random.random() < self.chance_of_recalc:
             return -1
         try:
-            pweights1 = np.zeros(len(stations))
-            pweights2 = np.zeros(len(stations))
-            num_ons = 1
-            for p in promos:
-                w1, target_index, num_ons = p.get_weights_increase(stations)
-                pweights1 += w1
-                pweights2[target_index] = 1
             if is_return:
                 choice = random.choices(self.return_data, self.return_weights, k=1)[0]
             else:
                 choice = random.choices(self.data, self.weights, k=1)[0]
-                if len(promos) > 0:
+            for p in promos:
+                if p.get_type() == "poster-target":
+                    puts_posters_index, target_index = p.get_weights_increase(stations)
+                    print(p.get_weights_increase(stations))
+                    pweights1 = np.zeros(len(stations))
+                    for index in puts_posters_index:
+                        pweights1[index] = 1
+                    pweights2 = np.zeros(len(stations))
+                    pweights2[target_index] = 1
+                    if is_return:
+                        pweights1 = pweights1[::-1]
+                        pweights2 = pweights2[::-1]
                     seat_travelers = choice[1][target_index]
                     sleep_travelers = choice[3][target_index]
-                    assert self.seat_capacity - seat_travelers > 0
-                    traveler_increase_seat = np.minimum(seat_travelers*0.4, self.seat_capacity - seat_travelers)
-                    traveler_increase_sleeper = np.minimum(sleep_travelers*0.4, self.sleeper_capacity - sleep_travelers)
-                    seat_increase = np.round((pweights1*traveler_increase_seat)/num_ons, 0)
-                    sleep_increase = np.round((pweights1*traveler_increase_sleeper)/num_ons, 0)
+                    assert self.seat_capacity - seat_travelers >= 0
+                    traveler_increase_seat = np.minimum(seat_travelers * 0.4, self.seat_capacity - seat_travelers)
+                    traveler_increase_sleeper = np.minimum(sleep_travelers * 0.4, self.sleeper_capacity - sleep_travelers)
+                    seat_increase = np.round((pweights1 * traveler_increase_seat) / len(puts_posters_index), 0)
+                    sleep_increase = np.round((pweights1 * traveler_increase_sleeper) / len(puts_posters_index), 0)
                     print(f"{seat_increase}, {sleep_increase}")
                     choice[0] = choice[0] + seat_increase
                     choice[2] = choice[2] + sleep_increase
                     choice[1] = choice[1] + pweights2 * np.sum(seat_increase)
                     choice[3] = choice[3] + pweights2 * np.sum(sleep_increase)
+                    stations_past = target_index - np.mean(puts_posters_index)
+                    choice[4] += stations_past * self.price_per_station_seat * traveler_increase_seat
+                    choice[4] += stations_past * self.price_per_station_sleep * traveler_increase_sleeper
+                elif p.get_type() == "poster-service":
+                    for i in range(len(choice[0])-1):
+                        total_seated = np.sum(choice[0][:i]) - np.sum(choice[1][:i])
+                        total_sleeper = np.sum(choice[2][:i]) - np.sum(choice[3][:i])
+                        percent_increase = 0.2 * random.random()
+                        seat_increase = np.minimum(choice[0][i]*percent_increase, self.seat_capacity -
+                                                   total_seated)
+                        sleep_increase = np.minimum(choice[0][i] * percent_increase, self.sleeper_capacity -
+                                                    total_sleeper)
+                        going_to = random.randint(1, len(choice[0]) - i)  # where the additional passengers get off.
+                        choice[0][i] += seat_increase
+                        choice[1][i + going_to] += seat_increase
+                        choice[2][i] += sleep_increase
+                        choice[3][i + going_to] += sleep_increase
+                        """ add the revenue increase"""
+                        choice[4] += going_to * self.price_per_station_seat * seat_increase
+                        choice[4] += going_to * self.price_per_station_sleep * sleep_increase
             logger.debug(f"PatronageData selected {choice}")
             return choice
         except IndexError:  # this error occurred in testing, but I don't know why
@@ -102,6 +133,12 @@ class PatronageData:
         if self.chance_of_recalc < 0.1:
             self.chance_of_recalc = 0.1  # 1 in 10 runs must use an original calculation.
         logger.debug(f"new chance of recalc is {self.chance_of_recalc}")
+
+    def set_price_per_station(self, price):
+        """ We need to know this because promotions are all dealt with at the PD level. Promotions cause a percentage
+            increase to the save patronage data, and we need to know how much extra revenue to give for the patronage
+            increase."""
+        self.price_per_station = price
 
     def change_reputation(self):
         logger.warning("NOT IMPLEMENTED YET!")
@@ -136,6 +173,7 @@ class Service:
         self.returns = False
         # note: departure_time is datetime object with date 1900-01-01 for compatibility with timedelta.
         # Always ignore date and just use time.
+        self.departure_times = []
         self.departure_times = []
         self.days = [False, False, False, False, False, False, False]
         self.config = [1, 0, 0, 0, 0]
