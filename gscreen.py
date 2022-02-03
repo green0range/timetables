@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -140,6 +141,8 @@ def get_sort_key(t):
 
 class Map:
     def __init__(self, width, height, towns, wallet, score, colours):
+        with open(os.path.join("assets", "coastline_data.json"), "r", encoding='utf-8') as f:
+            self.coastline_data = json.load(f)
         self.map_image = None
         self.map_image_needs_update = True
         self.img = Image.new("RGBA", (width, height), color=(255, 255, 255, 255))
@@ -167,12 +170,12 @@ class Map:
         self.percent_connected = 0.0
         self.current_bounding_box = self.bounding_box_aotearoa
         self.towns = towns
+        self.towns.sort(reverse=True, key=get_sort_key)
         self.report_mode = False
         self.redraw()
         self.about_to_skip_year = False
         self.previous_time_increment = None
         self.win_conditions = achievements.Conditions()
-        self.towns.sort(key=get_sort_key)
 
     def skip_year(self):
         new_year = self.game_time.year + 1
@@ -252,6 +255,19 @@ class Map:
             self.legend_key.append(key)
             self.legend_colour.append(colour)
 
+    def draw_coastlines(self):
+        coastline_map = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
+        draw_map = ImageDraw.Draw(coastline_map)
+        for island in self.coastline_data:
+            for i in range(1, len(self.coastline_data[island])):
+                coord1 = self.coastline_data[island][i]
+                coord0 = self.coastline_data[island][i-1]
+                x0, y0 = self.convert_latlgn_to_xy(coord0)
+                x1, y1 = self.convert_latlgn_to_xy(coord1)
+                draw_map.line((x0, y0, x1, y1), fill=(41, 182, 246), width=1)
+        return coastline_map
+
+
     def redraw(self):
         t = self.game_time.strftime("%d/%m/%Y, %H:%M")
         money = "${:,}".format(self.wallet.get_balance())
@@ -260,8 +276,10 @@ class Map:
         font = ImageFont.truetype(os.path.join('assets', 'fonts', 'Raleway-Medium.ttf'), 12)
         font2 = ImageFont.truetype(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf'), 14)
         if self.map_image_needs_update:
+            coastline_map = self.draw_coastlines()
             self.map_image_needs_update = False
             self.map_image = Image.new("RGBA", (self.img.width, self.img.height), color=(255, 255, 255, 0))
+            Image.Image.paste(self.map_image, coastline_map)
             draw_map = ImageDraw.Draw(self.map_image)
             for town in self.towns:
                 x, y = self.convert_latlgn_to_xy(town.get_latlgn())
