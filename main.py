@@ -872,6 +872,7 @@ You can find out more about it at https://timetablesgame.nz"""
             grid.addWidget(ck_target_location, 4, 0, 1, 2)
             ad_info = {
                 "type": "print media",
+                'cmb_service_2_promote': cmb_service_to_promote,
                 "ck_target_location": ck_target_location
             }
         btn_buy_campaign.clicked.connect(lambda: self.buy_campaign(ad_info))
@@ -884,12 +885,72 @@ You can find out more about it at https://timetablesgame.nz"""
             target_town = info['posterData'][selection]['target']
             cost = info['posterData'][selection]['cost']
             puts_posters = info['posterData'][selection]['putsPosters']
-            promo = promotions.Promotion()
-            response = promo.add_poster_promotion(target_town, puts_posters, self.img_map.get_time(), self.services[:len(self.services)-1])
-            self.close_report()
-            if response[0] == "C":
-                self.show_caution(response[0:])
-
+            promo = promotions.Promotion(self.img_map)
+            if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - Poster"):
+                response = promo.add_poster_promotion(target_town, puts_posters, self.img_map.get_time(), self.services[:len(self.services)-1])
+                self.close_report()
+                if response[0] == "C":
+                    self.wallet.addsubtract(cost, self.img_map.get_time().strftime("%d-%m-%y"), "Ad Campaign refund")
+                    self.show_caution(response[0:])
+            else:
+                self.show_caution("Not enough money")
+        elif info['type'] == 'print media':
+            if info['ck_target_location'].isChecked():
+                cost = 10000
+            else:
+                cost = 60000
+            if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - Print media"):
+                promo = promotions.Promotion(self.img_map)
+                promo.add_print_media(info['cmb_service_2_promote'].currentText(), self.img_map.get_time(), self.services[:len(self.services)-1], info['ck_target_location'].isChecked())
+                self.close_report()
+            else:
+                self.show_caution("Not enough money")
+        elif info['type'] == 'social media':
+            self.show_caution("This feature is still under development")
+        elif info['type'] == 'radio':
+            cost = 0
+            times = []
+            if info['ck_7am'].isChecked():
+                cost += 30000
+                times.append(7)
+            if info['ck_noon']:
+                cost += 20000
+                times.append(12)
+            if info['ck_6pm']:
+                cost += 50000
+                times.append(18)
+            if info['ck_9pm']:
+                cost += 40000
+                times.append(21)
+            if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - TV"):
+                promo = promotions.Promotion(self.img_map)
+                promo.add_radio(info['cmb_service'].currentText(), self.img_map.get_time(),
+                                self.services[:len(self.services) - 1], times)
+                self.close_report()
+            else:
+                self.show_caution("Not enough money")
+        elif info['type'] == 'tv':
+            cost = 0
+            times = []
+            if info['ck_7am'].isChecked():
+                cost += 70000
+                times.append(7)
+            if info['ck_noon']:
+                cost += 40000
+                times.append(12)
+            if info['ck_6pm']:
+                cost += 140000
+                times.append(18)
+            if info['ck_9pm']:
+                cost += 100000
+                times.append(21)
+            if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - TV"):
+                promo = promotions.Promotion(self.img_map)
+                promo.add_tv_ad(info['cmb_service'].currentText(), self.img_map.get_time(),
+                                      self.services[:len(self.services) - 1], times)
+                self.close_report()
+            else:
+                self.show_caution("Not enough money")
 
 
     def update_services_panel(self, service):

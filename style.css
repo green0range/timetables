@@ -21,6 +21,14 @@ QCheckBox {
     color: black;
 }
 
+QPushButton#btn_exit {
+    border: 1px solid #BBBBBB;
+    border-radius: 1px;
+    padding: 2px;
+    background-color: #DA958F;
+    color: black;
+}
+
 QPushButton::checked {
     border: 1px solid #BBBBBB;
     border-radius: 1px;

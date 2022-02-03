@@ -310,13 +310,16 @@ class Map:
         if self.achievement_display_counter > 0:
             draw.text((int(self.img.width/2)-100, self.img.height - 100), self.achievement_display_text, font=font2, fill=(0, 0, 0, 255))
 
-    def display_new_achievement(self, achieves):
+    def display_new_achievement(self, achieves, dont_add_preamble=False):
         if len(achieves) > 0:
             self.achievement_display_text = ""
             for ach in achieves:
-                self.achievement_display_text += "Achievement Completed: " + ach + "\n"
+                if dont_add_preamble:
+                    self.achievement_display_text += ach + "\n"
+                else:
+                    self.achievement_display_text += "Achievement Completed: " + ach + "\n"
             self.redraw()
-            self.achievement_display_counter = 5
+            self.achievement_display_counter = 8
 
     def update_time(self, tick_rate):
         self.game_time += self.time_increment
