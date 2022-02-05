@@ -194,7 +194,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif rb3.isChecked():
             slot = 3
         self.save_manager.set_save_slot(slot)
-        self.wallet.set_save_dir(self.save_manager.get_dir())
+        self.wallet.set_save_dir(self.save_manager)
         load_data = self.save_manager.load()
         if load_data is not None:  # returns None if there is no save in the slot
             logger.info("Loading game state from file")

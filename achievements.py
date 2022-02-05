@@ -42,8 +42,8 @@ class Achievements:
                              "A True Coaster": "Run a train that stays entirely on the West Coast",
                              "SUPERCITY": "Run a train that stops in Auckland",
                              "Capital Connection": "Run a train between Wellington and Palmerston North",
-                             "[na]The far east": "Connect Gisbourne to your network",
-                             "[na]North to south": "Connect the most northern and southern towns using only 2 services",
+                             "The far east": "Connect Gisbourne to your network",
+                             "North to south": "Connect the most northern and southern towns using only 2 services",
                              "[na]Picking up steam": "Transport your first 100,000 passengers",
                              "[na]Express service": "Establish an express train which bypasses at least 5 towns.",
                              "[na]Remembered Worlds": "Use the Stratford-Okahukura Line",
@@ -53,7 +53,8 @@ class Achievements:
                              "[na]Ski Ruapehu": "Transport 100 people to Ohakune during winter",
                              "[na]Fake it till you make it": "Edit a service report",
                              "[na]Rapid transit": "Create a service that runs every 15 minutes",
-                             "[na]Marketing guru": "Run an advertising campaign",
+                             "Promoter": "Run your first advertising campaign",
+                             "[na]Marketing guru": "Run an ad campaign that brings in more money than you spend on it",
                              "Information": "[na] means `not attainable` because it isn't full programmed yet!"
                              }
         self.completed_achievements = []
@@ -163,4 +164,43 @@ class Achievements:
                         goes_to_palmy = True
                 if goes_to_palmy and goes_to_wellington:
                     return True
+        elif achievement_name == "The far east":
+            """By must connect back to your network, I mean
+                it must connect to one other line that is not the Gisbourne line"""
+            gizy_line = None
+            for s in service:
+                for station in s.get_stations():
+                    if station.get_name() == "Gisbourne":
+                        gizy_line = s
+                        break
+            if gizy_line is not None:
+                for s in service:
+                    if not s is gizy_line:
+                        for station in s.get_stations():
+                            for station2 in gizy_line.get_stations():
+                                if station == station2:
+                                    return True
+        elif achievement_name == "North to south":
+            north_is = False
+            south_is = False
+            for s in service:
+                picton = False
+                invers = False
+                wellington = False
+                hikurangi = False
+                for station in s.get_stations():
+                    if station.get_name() == "Picton":
+                        picton = True
+                    if station.get_name() == "Invercargill":
+                        invers = True
+                    if station.get_name() == "Wellington":
+                        wellington = True
+                    if station.get_name() == "Hikurangi":
+                        hikurangi = True
+                if picton and invers:
+                    south_is = True
+                if wellington and hikurangi:
+                    north_is = True
+            if north_is and south_is:
+                return True
         return False

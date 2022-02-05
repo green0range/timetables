@@ -464,9 +464,14 @@ class Service:
         return "P"
 
     def get_driving_cost(self, distance):
-        """ Estimates the cost of doing the trip by car, so that passengers have a base point to compare prices"""
+        """ Estimates the cost of doing the trip by car, so that passengers have a base point to compare prices
+            The congestion charge is meant to make trains more competitive near urban centres, it is a bit of
+            a one-size-fits-all method."""
         petrol_price = 1.98  # todo: slowly inflate prices
         km_per_litre = 15
+        congestion_charge = 5
+        if distance < 20:
+            return (distance / km_per_litre) * petrol_price + congestion_charge
         return (distance / km_per_litre) * petrol_price
 
     def price_sensitivity(self, train_cost, i, j, sleeper):
@@ -542,8 +547,13 @@ class Service:
         """ The boost_factor is used to increase passenger numbers in cases of rush hours, quick service, or
             high passenger confidence in the service."""
         boost_factor = np.ones(len(self.stations))
-        reputation_boost = np.ones(len(self.stations)) * (0.15 * random.random() + 0.1) * reputation
+        reputation_boost = np.ones(len(self.stations)) * (0.4 * random.random() + 0.2) * reputation
         boost_factor += reputation_boost
+        ''' The game appears to have a bias to long distance (the Capital Connection should be one of the most
+            popular routes, but it's not) so here I am giving a boost to trips with a total duration less than 3 hrs.'''
+        if self.get_journey_length(0, len(self.stations)-1) < datetime.timedelta(hours=3):
+            boost_factor *= 2.5
+        print(boost_factor)
         for i, town in enumerate(self.stations):
             town_pops[i] = town.population
             for ep in town.economic_partners:
@@ -551,14 +561,14 @@ class Service:
                     if ep is self.stations[j]:
                         if self.get_journey_length(i, j) <= acceptable_commute_time:
                             if in_rush_hour:
-                                boost_factor[j] += 0.06
+                                boost_factor[j] += 0.6
                             else:
-                                boost_factor[j] += 0.04
+                                boost_factor[j] += 0.4
                         else:
                             if in_rush_hour:
-                                boost_factor[j] += 0.04
+                                boost_factor[j] += 0.4
                             else:
-                                boost_factor[j] += 0.02
+                                boost_factor[j] += 0.2
         """First we simulate demand by find how many want on, and where they want to get off. They we check that the
             train has the capacity to carry them and let them on in first on first served basis."""
         on_seat = np.zeros(len(self.stations))
@@ -568,7 +578,7 @@ class Service:
         current_seated_passengers = 0
         current_sleepers = 0
         total_fares = 0
-        price_per_station_past_seated = self.fares[0] / len(self.stations)
+        price_per_station_past_seated = (self.fares[0] / len(self.stations)) + 0.15*self.fares[0]
         for i, townpop in enumerate(town_pops):
             current_seated_passengers -= off_seat[i]
             # determines how many people are getting on at this station and where they are getting off
@@ -584,8 +594,7 @@ class Service:
                 else:
                     on_seat[i] = self.get_seated_capacity() - current_seated_passengers  # use all available capacity
                     current_seated_passengers = self.get_seated_capacity()  # train is full
-                if not daytime[0] <= time <= daytime[
-                    1] and self.get_sleeper_capacity() - current_sleepers > want_to_travel_sleeping:
+                if not daytime[0] <= time <= daytime[1] and self.get_sleeper_capacity() - current_sleepers > want_to_travel_sleeping:
                     on_sleeper[i] = want_to_travel_sleeping
                     current_sleepers += want_to_travel_sleeping
                 elif not daytime[0] <= time <= daytime[1]:
@@ -620,7 +629,7 @@ class Service:
                 for dest in destinations:
                     # not scaling based on trip length for sleepers because nobody can `take over` their bed the way
                     # someone can `take over` a seat when someone leaves.
-                    train_cost = (int(dest) - i + 1) * price_per_station_past_seated
+                    train_cost = np.minimum((int(dest) - i + 1) * price_per_station_past_seated, self.fares[0])
                     if self.price_sensitivity(train_cost, i, int(dest), False):
                         score.increase(self.stations[i].getDistanceToNode(self.stations[int(dest)]))
                         off_seat[int(dest)] += 1

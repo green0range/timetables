@@ -46,6 +46,7 @@ class Wallet:
         self.overdraft = 0
         self.overdraft_interest_rate = 0.1
         self.account_records = []
+        self.save_manager = None
 
     def get_balance(self):
         return np.round(self.money, 2)
@@ -84,8 +85,8 @@ class Wallet:
                 file_records.append(record.strip(" \n").split(","))
         return file_records + self.account_records
 
-    def set_save_dir(self, save_dir):
-        self.file = os.path.join(save_dir, "monies.csv")
+    def set_save_dir(self, sm):
+        self.save_manager = sm
 
     def save_records(self):
         txt = ""
@@ -93,11 +94,7 @@ class Wallet:
             txt += f"{entry[0]}, {entry[1]}, {entry[2]}, {entry[3]}\n"
         del self.account_records
         self.account_records = []
-        ''' This needs to be changed to hand off saving to the save manager.
-        if self.file is not None:
-            with open(self.file, "a") as f:
-                f.write(txt)
-        '''
+        self.save_manager.save_data("monies.csv", txt, append_mode=True)
 
 class ServiceColours:
     def __init__(self):
