@@ -52,6 +52,14 @@ class SaveManager():
             with open(path, "w", encoding='utf-8') as f:
                 f.write(data)
 
+    def load_data(self, file_identifier):
+        path = os.path.join("saves", f"slot{self.save_slot}", file_identifier)
+        if not os.path.exists(path):
+            return
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+
+
     def save(self, wallet, score, towns, services, map_):
         self.delete_save(self.save_slot, keep_data=True)  # delete any old save data
         path = os.path.join("saves", f"slot{self.save_slot}")
@@ -74,8 +82,10 @@ class SaveManager():
             f.writelines(self.data_file_ids)
 
     def load(self):
+        """ To load, the savetime.txt file must exist. This is so that we know the save actually exists,
+            as data (e.g. from the wallet) could be saved without the game having a valid full save."""
         path = os.path.join("saves", f"slot{self.save_slot}")
-        if not os.path.exists(path):
+        if not os.path.exists(os.path.join(path, "savetime.txt")):
             return None
         with open(os.path.join(path, "money.pkl"), "rb") as fb:
             wallet = pickle.load(fb)

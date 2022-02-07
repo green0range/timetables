@@ -3,7 +3,7 @@ import logging
 import random
 import sys
 from copy import copy
-
+import uuid
 import numpy as np
 
 logging.basicConfig(stream=sys.stdout,
@@ -175,10 +175,13 @@ class PatronageData:
 
 
 class Service:
-    def __init__(self):
+    def __init__(self, save_manager):
         self.name = ""
+        self.name = ""
+        self.save_manager = save_manager
         self.confirmed = False
         self.pd = PatronageData()
+        self.my_uuid = uuid.uuid4()
         # my upfront costs are based on this: https://www.linkedin.com/pulse/case-overnight-sleeper-train-between-auckland-wellington-nicolas-reid/
         self.up_front_costs = {"engine": 2.5e6,
                                "passenger car": 1e6,
@@ -220,10 +223,113 @@ class Service:
     def register_promotion(self, promo):
         self.promotions.append(promo)
 
+    def log_earnings_report(self, profit, time, is_return=False):
+        if is_return:
+            self.earnings_report_return.append([profit, time])
+        else:
+            self.earnings_report.append([profit, time])
+        if len(self.earnings_report) > 20:
+            txt = ""
+            for item in self.earnings_report:
+                txt += f"{item[0]},{item[1]}\n"
+            self.save_manager.save_data(str(self.my_uuid)+"_e", txt, append_mode=True)
+            self.earnings_report = []
+        if len(self.earnings_report_return) > 20:
+            txt = ""
+            for item in self.earnings_report_return:
+                txt += f"{item[0]},{item[1]}\n"
+            self.save_manager.save_data(str(self.my_uuid)+"_er", txt, append_mode=True)
+            self.earnings_report_return = []
+
+    def log_passenger_numbers(self, numbers, is_return=False):
+        if is_return:
+            self.passenger_numbers_report_return.append(numbers)
+        else:
+            self.passenger_numbers_report.append(numbers)
+        if len(self.passenger_numbers_report) > 20:  # [on_seat, off_seat, on_sleeper, off_sleeper]
+            txt = ""
+            for entry in self.passenger_numbers_report:
+                for i, station_on_seat in enumerate(entry[0]):
+                    if i == 0:
+                        txt += str(station_on_seat)
+                    else:
+                        txt += "," + str(station_on_seat)
+                txt += " "
+                for i, station_off_seat in enumerate(entry[1]):
+                    if i == 0:
+                        txt += str(station_off_seat)
+                    else:
+                        txt += "," + str(station_off_seat)
+                txt += " "
+                for i, station_on_sleep in enumerate(entry[2]):
+                    if i == 0:
+                        txt += str(station_on_sleep)
+                    else:
+                        txt += "," + str(station_on_sleep)
+                txt += " "
+                for i, station_off_sleep in enumerate(entry[3]):
+                    if i == 0:
+                        txt += str(station_off_sleep)
+                    else:
+                        txt += "," + str(station_off_sleep)
+                txt += "\n"
+            # this will create collisions when trains are named the same
+            self.save_manager.save_data(str(self.my_uuid), txt, append_mode=True)
+            self.passenger_numbers_report = []
+        if len(self.passenger_numbers_report_return) > 20:  # [on_seat, off_seat, on_sleeper, off_sleeper]
+            txt = ""
+            for entry in self.passenger_numbers_report_return:
+                for i, station_on_seat in enumerate(entry[0]):
+                    if i == 0:
+                        txt += str(station_on_seat)
+                    else:
+                        txt += "," + str(station_on_seat)
+                txt += " "
+                for i, station_off_seat in enumerate(entry[1]):
+                    if i == 0:
+                        txt += str(station_off_seat)
+                    else:
+                        txt += "," + str(station_off_seat)
+                txt += " "
+                for i, station_on_sleep in enumerate(entry[2]):
+                    if i == 0:
+                        txt += str(station_on_sleep)
+                    else:
+                        txt += "," + str(station_on_sleep)
+                txt += " "
+                for i, station_off_sleep in enumerate(entry[3]):
+                    if i == 0:
+                        txt += str(station_off_sleep)
+                    else:
+                        txt += "," + str(station_off_sleep)
+                txt += "\n"
+            # this will create collisions when trains are named the same
+            self.save_manager.save_data(str(self.my_uuid)+"_r", txt, append_mode=True)
+            self.passenger_numbers_report_return = []
+
     def get_passenger_numbers_report(self, returns_report=False):
-        if returns_report:
-            return self.passenger_numbers_report_return
-        return self.passenger_numbers_report
+        if not returns_report:
+            passenger_numbers = []
+            pntxt = self.save_manager.load_data(str(self.my_uuid))
+            if pntxt is not None:
+                for line in pntxt.split("\n"):
+                    try:
+                        seat_on, seat_off, sleep_on, sleep_off = line.split(" ")
+                        passenger_numbers.append([seat_on.split(","), seat_off.split(","), sleep_on.split(","), sleep_off.split(", ")])
+                    except ValueError:
+                        pass
+            return passenger_numbers + self.passenger_numbers_report
+        else:
+            passenger_numbers_return = []
+            pntxt = self.save_manager.load_data(str(self.my_uuid)+"_r")
+            if pntxt is not None:
+                for line in pntxt.split("\n"):
+                    try:
+                        seat_on, seat_off, sleep_on, sleep_off = line.split(" ")
+                        passenger_numbers_return.append([seat_on.split(","), seat_off.split(","), sleep_on.split(","), sleep_off.split(", ")])
+                    except ValueError:
+                        pass
+            return passenger_numbers_return + self.passenger_numbers_report_return
 
     def get_stations(self):
         """ This must always return the stations in the correct order, even if they are reversed internally!"""
@@ -243,8 +349,27 @@ class Service:
 
     def get_earnings_report(self, returns_report=False):
         if returns_report:
-            return self.earnings_report_return
-        return self.earnings_report
+            earnings = []
+            txt = self.save_manager.load_data(str(self.my_uuid) + "_er")
+            if txt is not None:
+                for line in txt.split("\n"):
+                    try:
+                        profit, date = line.split(",")
+                        earnings.append([profit, date])
+                    except ValueError:
+                        pass
+            return earnings + self.earnings_report_return
+        else:
+            earnings = []
+            txt = self.save_manager.load_data(str(self.my_uuid) + "_e")
+            if txt is not None:
+                for line in txt.split("\n"):
+                    try:
+                        profit, date = line.split(",")
+                        earnings.append([profit, date])
+                    except ValueError:
+                        pass
+            return earnings + self.earnings_report_return
 
     def update(self, stations, returns, departure_times, days, config, fares):
         if self.editable:
@@ -405,18 +530,16 @@ class Service:
                                                               time_0.date(), company_reputation)
                         else:
                             profit = run_instance[4]
-                            self.passenger_numbers_report.insert(0, run_instance[:4])
+                            self.log_passenger_numbers(run_instance[:4])
                             for j, town in enumerate(self.stations):
                                 town.people_arrived(run_instance[1][j] + run_instance[3][j])
                                 town.people_departed(run_instance[0][j] + run_instance[2][j])
                         profit -= self.calculate_gst(profit)
                         profit -= self.calculate_cost()
                         profit -= self.calculate_tax(profit)
-                        self.earnings_report.insert(0, [profit, datetime.datetime.combine(time.date(),
+                        self.log_earnings_report(profit, datetime.datetime.combine(time.date(),
                                                                                           self.departure_times[
-                                                                                              i].time())])
-                        if len(self.earnings_report) > 10:
-                            self.earnings_report = self.earnings_report[:5]
+                                                                                              i].time()).strftime("%d-%m-%y %H:%M"))
                         if wallet.addsubtract(profit, time.strftime("%d/%m/%y"),
                                               details=f"running cost of {self.name}"):
                             logger.debug(f"ran service {self.name} at {self.departure_times[i].time()} for ${profit}")
@@ -437,14 +560,11 @@ class Service:
                                     town.people_arrived(run_instance[1][j] + run_instance[3][j])
                                     town.people_departed(run_instance[0][j] + run_instance[2][j])
                                 profit = run_instance[4]
-                                self.passenger_numbers_report_return.insert(0, run_instance[:4])
+                                self.log_passenger_numbers(run_instance[:4], is_return=True)
                             profit -= self.calculate_gst(profit)
                             profit -= self.calculate_cost()
                             profit -= self.calculate_tax(profit)
-                            self.earnings_report_return.insert(0, [profit, datetime.datetime.combine(time.date(),
-                                                                                                     return_time.time())])
-                            if len(self.earnings_report_return) > 10:
-                                self.earnings_report_return = self.earnings_report_return[:5]
+                            self.log_earnings_report(profit, datetime.datetime.combine(time.date(), return_time.time()).strftime("%d-%m-%y %H:%M"), is_return=True)
                             if wallet.addsubtract(profit, time.strftime("%d/%m/%y"),
                                                   details=f"running cost of {self.name}"):
                                 logger.debug(
@@ -636,13 +756,7 @@ class Service:
                         total_fares += train_cost
                     else:
                         on_seat[i] -= 1
-        if is_return:
-            self.passenger_numbers_report_return.insert(0, [on_seat, off_seat, on_sleeper, off_sleeper])
-        else:
-            self.passenger_numbers_report.insert(0, [on_seat, off_seat, on_sleeper, off_sleeper])
-        if len(self.passenger_numbers_report) > 10:  # this is to avoid a memory leak. todo: log to file, so that we keep all records.
-            self.passenger_numbers_report = self.passenger_numbers_report[:5]
-            self.passenger_numbers_report_return = self.passenger_numbers_report_return[:5]
+        self.log_passenger_numbers([on_seat, off_seat, on_sleeper, off_sleeper], is_return=is_return)
         self.pd.push_data(on_seat, off_seat, on_sleeper, off_sleeper, total_fares, is_return)
         # select destination probs from remaining stations with prop proportaional to population
         # assign passenger numbers on and off at each town

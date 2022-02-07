@@ -17,6 +17,7 @@ import logging
 #import clipboard
 import webbrowser
 logger = logging.Logger(name="main")
+import sound
 
 
 
@@ -26,6 +27,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """ A lot of boilerplate stuff here"""
         super().__init__(*args, **kwargs)
         self.screen_size = scr_size
+        self.music = sound.Music()
         self.showFullScreen()  # the map image size is set based on the startup screen size, so don't resize!
         self.intermediate_towns = []
         self.towns = []
@@ -76,7 +78,8 @@ class MainWindow(QtWidgets.QMainWindow):
             `unconfirmed` meaning the train doesn't actually run until the status is changed to `confirmed`
             One unconfirmed service always exists on the tail of the self.services, which is the one altered by the
             route/service planner menu'''
-        self.services = [Service()]
+        self.save_manager = saves.SaveManager()
+        self.services = [Service(self.save_manager)]
         self.unconfirmed_service = self.services[0]
         self.fill_intermediate_towns(self.get_town_by_name(self.cmb_from.currentText()),
                                      self.get_town_by_name(self.cmb_to.currentText()))
@@ -111,7 +114,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_bounding_s.clicked.connect(lambda: self.set_view("south"))
         self.achievements = achievements.Achievements()
         self.btn_achievements.clicked.connect(self.display_achievements)
-        self.save_manager = saves.SaveManager()
         self.towns_with_services = []  # this allows tracking progress to have 90% towns connected.
         self.show_menu()
         self.btn_exit.clicked.connect(self.save_and_exit)
@@ -596,7 +598,7 @@ You can find out more about it at https://timetablesgame.nz"""
             table.setItem(current_row, i + 2, QtWidgets.QTableWidgetItem(station.get_name()))
         current_row += 1
         for (numbers, earn) in zip(passenger_numbers, earnings):
-            table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(earn[1].strftime('%H:%M %d/%m/%Y')))
+            table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(earn[1]))
             table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(f"{earn[0]}nz$"))
             table.setItem(current_row, 2, QtWidgets.QTableWidgetItem("Departures: (seat/sleep)"))
             table.setSpan(current_row, 2, 1, col_num)
@@ -994,7 +996,7 @@ You can find out more about it at https://timetablesgame.nz"""
                     self.towns_with_services.append(town)
             self.img_map.update_percent_connected(len(self.towns_with_services) / len(self.towns))
             self.update_services_panel(self.unconfirmed_service)
-            self.unconfirmed_service = Service()
+            self.unconfirmed_service = Service(self.save_manager)
             self.services.append(self.unconfirmed_service)
             self.btn_new_route.setChecked(False)
             self.clicked_new_route(False)
