@@ -615,6 +615,60 @@ You can find out more about it at https://timetablesgame.nz"""
                               QtWidgets.QTableWidgetItem(f"{int(numbers[1][i])}/{int(numbers[3][i])}"))
             current_row += 1
 
+    def plot_profit(self, earnings):
+        profit = []
+        date = []
+        if len(earnings) > 20:
+            earnings = earnings[len(earnings)-20:]
+        for p, d in earnings:
+            profit.append(float(p))
+            date.append(datetime.datetime.strptime(d, "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
+        print(profit, date)
+        fig1, ax1 = pyplot.subplots(figsize=(3, 2), dpi=130)
+        canvas = FigureCanvas(fig1)
+        ax1.plot(date, profit)
+        ax1.set_title("Recent Profit / Loss")
+        ax1.set_xlabel("date & time")
+        ax1.tick_params(rotation=90)
+        pyplot.subplots_adjust(bottom=0.5)
+        ax1.set_ylabel("Profit / Loss")
+        canvas.draw()
+        width, height = canvas.get_width_height()
+        im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
+        return QtGui.QPixmap.fromImage(im)
+
+    def plot_ridership(self, passenger_numbers, earnings):
+        total_seat = []
+        total_sleep = []
+        date = []
+        ticks = []
+        if len(earnings) > 100:
+            earnings = earnings[len(earnings)-100:]
+            passenger_numbers = passenger_numbers[len(earnings)-5]
+        for i, (numbers, earn) in enumerate(zip(passenger_numbers, earnings)):
+            if len(earnings) > 50:
+                if i % 2 == 0:
+                    ticks.append(datetime.datetime.strptime(earn[1], "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
+            else:
+                ticks.append(datetime.datetime.strptime(earn[1], "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
+            if len(numbers) == 4:
+                total_seat.append(np.sum(numbers[0]))
+                total_sleep.append(np.sum(numbers[2]))
+                date.append(datetime.datetime.strptime(earn[1], "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
+        fig1, ax1 = pyplot.subplots(figsize=(3, 2), dpi=130)
+        canvas = FigureCanvas(fig1)
+        ax1.plot(date, total_seat)
+        ax1.set_xticks(ticks)
+        ax1.set_title("Ridership")
+        ax1.set_xlabel("date")
+        ax1.set_ylabel("Number of people")
+        ax1.tick_params(rotation=90)
+        pyplot.subplots_adjust(bottom=0.5)
+        canvas.draw()
+        width, height = canvas.get_width_height()
+        im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
+        return QtGui.QPixmap.fromImage(im)
+
     def display_report(self, service):
         self.close_report()
         if self.mode_show_map:
@@ -624,32 +678,51 @@ You can find out more about it at https://timetablesgame.nz"""
                 self.map_image = None
         passenger_numbers = service.get_passenger_numbers_report()
         earnings = service.get_earnings_report()
+        lbl_title = QtWidgets.QLabel(f"Service Report for {service.get_name()}")
+        lbl_title.setFont(QtGui.QFont(self.title_font, 16))
         if len(passenger_numbers) == 0:
-            lbl_title = QtWidgets.QLabel(f"Service Report for {service.get_name()}")
             self.gr_left.addWidget(lbl_title, 0, 0)
-            lbl_404 = QtWidgets.QLabel("Report not found :( maybe the train hasn't completed any journeys yet?")
+            lbl_404 = QtWidgets.QLabel("404.\nNot found :(\n\nMaybe the train hasn't made its first journey yet?\n\nTrains only run at their scheduled time. Check the game is not paused \nand wait for the game time to reach the next scheduled time.")
+            lbl_404.setFont(QtGui.QFont(self.message_font, 14))
             self.gr_left.addWidget(lbl_404, 1, 0)
             close = QtWidgets.QPushButton("Close")
             close.clicked.connect(self.close_report)
-            self.gr_left.addWidget(close, 2, 0)
+            self.gr_left.addWidget(close, 4, 0, 1, 2)
             return
         col_num = len(passenger_numbers[0][0])
-        lbl_title = QtWidgets.QLabel(f"Service Report for {service.get_name()}")
-        self.gr_left.addWidget(lbl_title, 0, 0)
+        self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
+        lbl_profit_plot = QtWidgets.QLabel()
+        lbl_profit_plot.setPixmap(self.plot_profit(earnings))
+        lbl_ridership_plot = QtWidgets.QLabel()
+        lbl_ridership_plot.setPixmap(self.plot_ridership(passenger_numbers, earnings))
+        lbl_raw_data = QtWidgets.QLabel("Raw data:")
+        self.gr_left.addWidget(lbl_raw_data, 2, 0)
+        self.gr_left.addWidget(lbl_profit_plot, 1, 0)
+        self.gr_left.addWidget(lbl_ridership_plot, 1, 1)
         table = QtWidgets.QTableWidget(5*len(passenger_numbers), col_num+2)
-        self.gr_left.addWidget(table, 1, 0)
+        self.gr_left.addWidget(table, 3, 0, 1, 2)
         if service.returns:
+            lbl_titler = QtWidgets.QLabel(f"The returning train")
+            lbl_titler.setFont(QtGui.QFont(self.title_font, 16))
+            passenger_numbers_return = service.get_passenger_numbers_report(returns_report=True)
+            earnings_return = service.get_earnings_report(returns_report=True)
             table_return = QtWidgets.QTableWidget(5 * len(passenger_numbers), col_num + 2)
-            self.gr_left.addWidget(table_return, 2, 0)
+            self.gr_left.addWidget(table_return, 7, 0, 1, 2)
             stations = service.get_stations()
-            print(stations)
             stations.reverse()
-            print(stations)
-            self.fill_report_table(table_return, stations, service.get_passenger_numbers_report(returns_report=True),
-                                   service.get_earnings_report(returns_report=True))
+            lbl_profit_plot = QtWidgets.QLabel()
+            lbl_profit_plot.setPixmap(self.plot_profit(earnings_return))
+            lbl_ridership_plot = QtWidgets.QLabel()
+            lbl_ridership_plot.setPixmap(self.plot_ridership(passenger_numbers_return, earnings_return))
+            lbl_raw_data = QtWidgets.QLabel("Raw data:")
+            self.gr_left.addWidget(lbl_raw_data, 6, 0)
+            self.gr_left.addWidget(lbl_profit_plot, 5, 0)
+            self.gr_left.addWidget(lbl_ridership_plot, 5, 1)
+            self.gr_left.addWidget(lbl_titler, 4, 0, 1, 2)
+            self.fill_report_table(table_return, stations, passenger_numbers_return, earnings_return)
         close = QtWidgets.QPushButton("Close")
         close.clicked.connect(self.close_report)
-        self.gr_left.addWidget(close, 3, 0)
+        self.gr_left.addWidget(close, 10, 0, 1, 2)
         self.fill_report_table(table, service.get_stations(), passenger_numbers, earnings)
 
     def delete_service(self, service, widgets):

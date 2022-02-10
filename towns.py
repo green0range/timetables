@@ -314,10 +314,17 @@ class Service:
             if pntxt is not None:
                 for line in pntxt.split("\n"):
                     try:
-                        seat_on, seat_off, sleep_on, sleep_off = line.split(" ")
-                        passenger_numbers.append([seat_on.split(","), seat_off.split(","), sleep_on.split(","), sleep_off.split(", ")])
+                        stations = line.split(" ")
+                        run = []
+                        for i, station in enumerate(stations):
+                            on, off = station.split(",")
+                            run.append([int(on), int(off)])
+                        passenger_numbers.append(run)
                     except ValueError:
                         pass
+            if len(passenger_numbers) > 0:
+                print(f"asdfklj {passenger_numbers}, {type(passenger_numbers[0])}")
+            print(f"sdfsdf {self.passenger_numbers_report}")
             return passenger_numbers + self.passenger_numbers_report
         else:
             passenger_numbers_return = []
@@ -325,8 +332,12 @@ class Service:
             if pntxt is not None:
                 for line in pntxt.split("\n"):
                     try:
-                        seat_on, seat_off, sleep_on, sleep_off = line.split(" ")
-                        passenger_numbers_return.append([seat_on.split(","), seat_off.split(","), sleep_on.split(","), sleep_off.split(", ")])
+                        stations = line.split(" ")
+                        run = []
+                        for i, station in enumerate(stations):
+                            on, off = station.split(",")
+                            run.append([int(on), int(off)])
+                        passenger_numbers_return.append(run)
                     except ValueError:
                         pass
             return passenger_numbers_return + self.passenger_numbers_report_return
@@ -369,7 +380,7 @@ class Service:
                         earnings.append([profit, date])
                     except ValueError:
                         pass
-            return earnings + self.earnings_report_return
+            return earnings + self.earnings_report
 
     def update(self, stations, returns, departure_times, days, config, fares):
         if self.editable:
