@@ -13,12 +13,15 @@ import gscreen
 import promotions
 import saves
 from towns import Town, Service
+import hints
 import logging
-#import clipboard
+import clipboard
 import webbrowser
 logger = logging.Logger(name="main")
 import sound
 
+def alphabet_sort(item):
+    return item.get_name()
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -26,6 +29,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, scr_size, *args, **kwargs):
         """ A lot of boilerplate stuff here"""
         super().__init__(*args, **kwargs)
+        self.hint_timer = 0
+        self.hint_dict = {"clicked_reports": False,
+                          "never_true": False,
+                          "opened_promotions_menu": False}
         self.screen_size = scr_size
         self.music = sound.Music()
         self.showFullScreen()  # the map image size is set based on the startup screen size, so don't resize!
@@ -39,6 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gr_left = QtWidgets.QGridLayout(self.frm_map)
         self.gr_left.setAlignment(QtCore.Qt.AlignTop)
         self.map_image = None
+        self.hints = hints.HintManager()
         ''' get some fonts'''
         font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.abspath(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf')))
         font_id2 = QtGui.QFontDatabase.addApplicationFont(
@@ -55,6 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gr_list_of_routes.setAlignment(QtCore.Qt.AlignTop)
         self.scr_route_select.setWidget(self.frmscrl_route_select)
         self.colours = gscreen.ServiceColours()
+        self.towns.sort(key=alphabet_sort)
         for town in self.towns:
             self.cmb_from.addItem(town.get_name())
         self.cmb_from_selection_changed(self.cmb_from.currentText())
@@ -117,8 +126,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.towns_with_services = []  # this allows tracking progress to have 90% towns connected.
         self.show_menu()
         self.btn_exit.clicked.connect(self.save_and_exit)
-        self.btn_skip_year.clicked.connect(self.skip_year)
         self.company_reputation = 0.5
+        self.btn_disable_hint.clicked.connect(self.hints.setDisabled)
 
     def set_view(self, id):
         """
@@ -167,16 +176,6 @@ class MainWindow(QtWidgets.QMainWindow):
         btn_close.clicked.connect(self.close_report)
         self.gr_left.addWidget(btn_close)
 
-
-    def skip_year(self):
-        """
-        This should skip one year ahead, but I don't think all the services, passenger numbers and revenue are
-        updated properly when this is run so the skip year button is disabled (27 jan 22) todo: fix
-        :return: None
-        """
-        new_year = self.img_map.skip_year()
-        self.btn_skip_year.setText(f"Skip to {new_year+1}")
-
     def start_game(self, rb1, rb2, rb3):
         """
         Starts the game. This method is called when the start game button is pressed on the menu screen. It
@@ -214,7 +213,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.img_map.update_percent_connected(len(self.towns_with_services) / len(self.towns))
         self.timer.start()
         self.btn_new_route.setEnabled(True)
-        self.btn_skip_year.setEnabled(False)  # disabled because it doesn't work properly
         self.btn_pause.setEnabled(True)
         self.btn_toggle_speed.setEnabled(True)
         self.btn_bounding_nz.setEnabled(True)
@@ -269,7 +267,7 @@ class MainWindow(QtWidgets.QMainWindow):
         :param original_text: the original text of the button (what it will be set back to)
         :return: None
         """
-        #clipboard.copy(message)
+        clipboard.copy(message)
         btn.setText("Copied to clipboard")
         t = QtCore.QTimer()
         t.singleShot(1000, lambda: btn.setText(original_text))
@@ -430,6 +428,26 @@ You can find out more about it at https://timetablesgame.nz"""
                 response = service.run(self.img_map.get_increment(), self.img_map.get_time(), self.wallet, self.score, self.company_reputation)
                 if response[0] == "F":
                     self.show_fail_screen(response[2:])
+            if self.hints.enabled:
+                self.hint_dict["btn_new_route_is_toggled"] = self.btn_new_route.isChecked()
+                self.hint_dict["cmb_from_get_text"] = self.cmb_from.currentText()
+                self.hint_dict["cmb_to_get_text"] = self.cmb_to.currentText()
+                self.hint_dict['timer'] = self.hint_timer
+                self.hint_dict['number_of_services'] = len(self.services) - 1
+                self.hint_dict['departure_time_get_current_time'] = self.departure_time_edit.time().toString("hh:mm")
+                self.hint_dict['saturday_and_sunday_is_checked'] = (self.ckb_sat.isChecked() and self.ckb_sun.isChecked())
+                self.hint_dict['num_seat_cars'] = self.sb_passenger_car.value()
+                self.hint_dict['seat_price'] = self.dsb_seat_fare.value()
+                self.hint_dict['btn_north_island_is_checked'] = self.btn_bounding_n.isChecked()
+                try:
+                    self.hint_dict["chk_hamilton_is_checked"]
+                except KeyError:
+                    self.hint_dict['chk_hamilton_is_checked'] = False
+                self.hint_timer += 1
+                self.lbl_hint.setText(self.hints.get_text())
+                if self.hints.check(self.hint_dict):
+                    self.hints.next_hint()
+                    self.hint_timer = 0
         self.update_map_image()
 
     def update_map_image(self):
@@ -458,6 +476,8 @@ You can find out more about it at https://timetablesgame.nz"""
         stations = []
         for station in self.intermediate_towns:
             if station.isChecked():
+                if station.text() == "Hamilton":
+                    self.hint_dict['chk_hamilton_is_checked'] = True
                 stations.append(self.get_town_by_name(station.text()))
         returns = self.ckb_return.isChecked()
         fmt = "%H:%M"
@@ -590,6 +610,7 @@ You can find out more about it at https://timetablesgame.nz"""
         self.update_map_image()
 
     def fill_report_table(self, table, stations, passenger_numbers, earnings):
+        self.hint_dict['clicked_reports'] = True
         col_num = len(passenger_numbers[0][0])
         current_row = 0
         for i, station in enumerate(stations):
@@ -776,8 +797,8 @@ You can find out more about it at https://timetablesgame.nz"""
         grscr_campaign_options = QtWidgets.QGridLayout(scr_campaign_options)
         grscr_campaign_options.setAlignment(QtCore.Qt.AlignTop)
         cmb_campaign = QtWidgets.QComboBox()
-        cmb_campaign.addItems(["Nostalgic New Zealand Railways poster", "Television Advertisement",
-                               "Radio Advertisement", "Social Media Advertisement", "Print Media Advertisement"])
+        cmb_campaign.addItems(["Television Advertisement",
+                               "Radio Advertisement", "Print Media Advertisement", "Nostalgic New Zealand Railways poster"])
         cmb_campaign.currentTextChanged.connect(lambda: self.marketing_select_campaign(cmb_campaign, grscr_campaign_options))
         self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
         self.gr_left.addWidget(lbl1, 1, 0)
@@ -791,6 +812,7 @@ You can find out more about it at https://timetablesgame.nz"""
         lbl_descript.setText(new_descript)
 
     def marketing_select_campaign(self, cmb_campaign, grid):
+        self.hint_dict['opened_promotions_menu'] = True
         btn_close = QtWidgets.QPushButton("Close")
         btn_close.clicked.connect(self.close_report)
         btn_buy_campaign = QtWidgets.QPushButton("Buy Advertisement Campaign")
