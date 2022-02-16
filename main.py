@@ -1075,6 +1075,15 @@ You can find out more about it at https://timetablesgame.nz"""
         gr_service_panel.addWidget(btn_promote, len(self.services), 2)
         gr_service_panel.addWidget(service_remove, len(self.services), 3)
         service_panel.show()
+        for i in range(len(self.services)-1):
+            terminal_stations = self.services[i].get_terminal_stations()
+            times_at_terminal_stations = self.services[i].get_terminal_station_times()
+            if service.is_connecting(terminal_stations, times_at_terminal_stations):
+                service.has_connection = True
+                self.services[i].has_connection = True
+                self.services[i].pd.chance_of_recalc = 1
+                logger.debug(f"{self.services[i].get_name()} connects to {service.get_name()}")
+                break
 
     def click_confirm_new_route(self):
         self.company_reputation = self.company_reputation * (1.0 + 0.1 * (self.unconfirmed_service.get_capacity()/486))

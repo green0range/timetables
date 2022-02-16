@@ -95,7 +95,6 @@ class PatronageData:
                                                            self.sleeper_capacity - sleep_travelers)
                     seat_increase = np.round((pweights1 * traveler_increase_seat) / len(puts_posters_index), 0)
                     sleep_increase = np.round((pweights1 * traveler_increase_sleeper) / len(puts_posters_index), 0)
-                    print(f"{seat_increase}, {sleep_increase}")
                     choice[0] = choice[0] + seat_increase
                     choice[2] = choice[2] + sleep_increase
                     choice[1] = choice[1] + pweights2 * np.sum(seat_increase)
@@ -219,9 +218,48 @@ class Service:
         self.earnings_report = []  # [[profitN, datetime_of_journeyN], ... [profit1, ...]]
         self.earnings_report_return = []
         self.promotions = []
+        self.has_connection = False
 
     def register_promotion(self, promo):
         self.promotions.append(promo)
+
+    def is_connecting(self, terminal_stations, times_at_terminal_stations):
+        """ This returns true if the given stations connect to the service.
+            Connecting to the service is defined as follows:
+                Service A and B are connecting if A and B have a matching terminal station AND both trains arrive at
+                that matching station with a 15 minute time window (so that passengers can transfer trains.)
+            Connecting services each get a 10% increase in passengers.
+            It is assumed that terminal stations are the 'hub' stations, stations in the middle of the journey cannot
+            form connections. This is mostly for programming simplicity."""
+        my_terminal_stations = self.get_terminal_stations()
+        match = None
+        time_window = datetime.timedelta(minutes=15)
+        for i in range(2):
+            for j in range(2):
+                if my_terminal_stations[i] == terminal_stations[j]:
+                    match = [i, j]
+                    break
+            break
+        if match is None:
+            return False
+        for t in self.departure_times:
+            if match[0] == 1:
+                t1 = (t + self.get_journey_length(0, len(self.stations) - 1))
+            else:
+                t1 = t
+            for time2 in times_at_terminal_stations:
+                if t1 - time_window <= time2[match[1]] <= t1 + time_window:
+                    return True
+        return False
+
+    def get_terminal_stations(self):
+        return [self.stations[0].get_name(), self.stations[len(self.stations) - 1].get_name()]
+
+    def get_terminal_station_times(self):
+        times = []
+        for t in self.departure_times:
+            times.append([t, (t + self.get_journey_length(0, len(self.stations) - 1))])
+        return times
 
     def log_earnings_report(self, profit, time, is_return=False):
         if is_return:
@@ -322,9 +360,6 @@ class Service:
                         passenger_numbers.append(run)
                     except ValueError:
                         pass
-            if len(passenger_numbers) > 0:
-                print(f"asdfklj {passenger_numbers}, {type(passenger_numbers[0])}")
-            print(f"sdfsdf {self.passenger_numbers_report}")
             return passenger_numbers + self.passenger_numbers_report
         else:
             passenger_numbers_return = []
@@ -684,7 +719,6 @@ class Service:
             popular routes, but it's not) so here I am giving a boost to trips with a total duration less than 3 hrs.'''
         if self.get_journey_length(0, len(self.stations)-1) < datetime.timedelta(hours=3):
             boost_factor *= 2.5
-        print(boost_factor)
         for i, town in enumerate(self.stations):
             town_pops[i] = town.population
             for ep in town.economic_partners:
@@ -710,11 +744,14 @@ class Service:
         current_sleepers = 0
         total_fares = 0
         price_per_station_past_seated = (self.fares[0] / len(self.stations)) + 0.15*self.fares[0]
+        """Give connecting train boost"""
+        if self.has_connection:
+            boost_factor *= 3
         for i, townpop in enumerate(town_pops):
             current_seated_passengers -= off_seat[i]
             # determines how many people are getting on at this station and where they are getting off
             if i != len(town_pops) - 1:
-                want_to_travel_seated = np.round(self.stations[i].get_want_to_travels(date) * boost_factor[i], 0)
+                want_to_travel_seated = np.round(self.stations[i].get_want_to_travels(date, time) * boost_factor[i], 0)
                 # If it is nighttime, the demand shifts to sleeper cars
                 if not daytime[0] <= time <= daytime[1]:
                     want_to_travel_sleeping = np.round((2 / 3) * want_to_travel_seated, 0)
@@ -797,7 +834,7 @@ class Service:
 
 class Town:
     def __init__(self, name, population, coords):
-        self.want_to_travel = 0
+        self.want_to_travel = np.zeros(24)
         self.name = name
         self.population = int(population)
         self.coords = coords
@@ -807,16 +844,53 @@ class Town:
         self.economic_partners = []
         self.last_date_want_to_travels_generated = None
         self.visitors = 0
+        self.percentage_willing_to_use_public_transport = 0.1
 
     def get_latlgn(self):
         return self.coords
 
     def generate_want_to_travels(self):
-        hi = 0.6 * np.sqrt(self.population)
-        lo = 0.35 * np.sqrt(self.population)
-        self.want_to_travel = int(np.round(lo + random.random() * (hi - lo), 0))
+        """
+        This should find the number of people who want to travel out of the city on any given day. I'm not quite sure
+        what this will be and propose the following study:
+            Go the exit highway of a city and count people in cars exiting the city for one hour.
+            Multiply by the number of highways exiting the city.
+            Multiply by 12 (because much fewer people will be travelling at night)
+            Repeat in many cities.
+            Plot against population and fit the curve to get a formula for number of people travelling each day.
+            Flaws: variable travel times, airports, trains, buses (hard to count individuals in buses), people
+            travelling out a few km and coming back (not actually travelling intercity).
+        If anyone knows of a study like this, please encode the result in this method!
+        Anyway, once we have the formula, we return that multiplied by the percentage of people willing to travel on
+        public transport, with some added random flucations.
+        :return:
+        """
+        daily_travel_weights = [1, 1, 1, 2, 2, 5, 10, 50, 20, 10, 10, 10, 15, 10, 10, 30, 10, 40, 40, 40, 20, 10, 5, 2]
+        model = np.minimum(np.log(self.population**3)*np.sqrt(self.population), self.population*0.7)
+        ''' This model is my guess. Smaller settlements have a relatively high proportion of travellers because they
+            need to travel to a larger settlement for work, shopping etc, whereas the proportion of people traveling 
+            lowers as the town gets larger because people can work and get stuff locally so only need to travel to 
+            visit people go on holiday, less frequent business trips etc. '''
+        variation = 0.5 * (random.random() - 1)  # variation between -0.25 and 0.25
+        want_to_travel_all_modes = model + (variation * model)
+        self.want_to_travel = self.percentage_willing_to_use_public_transport * want_to_travel_all_modes
+        """ Now account for the visitors that r currently in the town. All recorded visitors arrived by rail, so they
+            are willing to travel back (or onwards) by rail. Some of them will be staying permanently, or not actually
+            be a visitor and have just returned home, so a number of the visitors are discounted, then the rest are
+            added to the want_to_travels. Here the number travelling onward is randomly chosen between 30% and 70% """
+        self.want_to_travel += ((0.4 * random.random()) + 0.3) * self.visitors
+        self.visitors = 0  # the rest will stay
+        self.want_to_travel = self.split_to_list(self.want_to_travel, daily_travel_weights)
 
-    def get_want_to_travels(self, date):
+    @staticmethod
+    def split_to_list(number, weights):
+        pieces = number / np.sum(weights)
+        result = np.zeros(len(weights))
+        for i, w in enumerate(weights):
+            result[i] = pieces * w
+        return result
+
+    def get_want_to_travels(self, date, time):
         """
         Each day, a new group of people who want to travel are generated, based on population size, with some random
         chance. The available travelers are those people, plus any positive count of visitors. When a person leaves
@@ -824,7 +898,9 @@ class Town:
         if people are leaving the town, it should always be close to zero as some people will return on the next train
         and increase it again. If abs(visitor) > 5% of population, then this is an indication the player has found an
         explort that must be nerfed.
-        :param date:  The date the train is departing. People who want to travel is only updated daily.
+        :param date:  The date the train is departing. People who want to travel is only updated daily, but the want to
+        travels have a preferred hour that they want to travel in. (This is to encourage players to run trains multiple
+        time day.)
         :return: number of people available to travel
         """
         if self.last_date_want_to_travels_generated is None:
@@ -834,19 +910,17 @@ class Town:
             self.generate_want_to_travels()
             self.last_date_want_to_travels_generated = date
             logger.debug(f"generated want to travels for date {date}")
-        visitors_onward_travel = 0
-        if self.visitors > 0:
-            visitors_onward_travel = int(np.round(random.random() * self.visitors, 0))
-        return self.want_to_travel + visitors_onward_travel
+        self.hour_of_train_departure = time.hour
+        return self.want_to_travel[time.hour]
 
     def person_departed(self):
-        self.visitors -= 1
+        self.want_to_travel[self.hour_of_train_departure] -= 1
 
     def person_arrived(self):
         self.visitors += 1
 
     def people_departed(self, num):
-        self.visitors -= num
+        self.want_to_travel[self.hour_of_train_departure] -= num
 
     def people_arrived(self, num):
         self.visitors += num
