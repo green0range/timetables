@@ -1,0 +1,33 @@
+{
+	"enable_music": true,
+	"AcousticRock": {
+		"mood": "happy"
+	},
+	"AllGoodInTheWood": {
+		"mood": "happy"
+	},
+	"CorporationMotivation":{
+		"mood": "happy"
+	},
+	"BeautifulDaughter": {
+		"mood": "unhappy"
+	},
+	"TrippinCoffee": {
+		"mood": "happy"
+	},
+	"Tangerine": {
+		"mood": "neutral"
+	},
+	"FallingSky":{
+		"mood": "happy"
+	},
+	"AMomentsReflection": {
+		"mood": "dire"
+	},
+	"EpicSeries": {
+		"mood": "unhappy"
+	},
+	"AshesOfAnEmpire": {
+		"mood": "unhappy"
+	}
+}

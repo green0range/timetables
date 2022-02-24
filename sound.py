@@ -1,10 +1,57 @@
+import os
+import random
 from PyQt5.QtMultimedia import QSound
-
+from pydub import AudioSegment
+import json
 
 class Music:
     def __init__(self):
-        self.a = QSound("assets/music/AcousticRock.wav")
-        #self.a.play()
+        """ There are 4 moods: happy, neutral, unhappy and dire. Happy should be played at the start of the game
+            and when the player is on target in terms of pkms. Unhappy is for when the player is not quite on target
+            and dire is for when the player is well below target. Neutral can be used as a transition.
+            All songs are tagged with one of the moods and the music object will play songs from the current mood
+            randomly until the mood is changed, then transition into songs from the new mood.
 
-    def play(self):
-        self.a.play()
+            Songs are packaged as mp3 because the file size is smaller, they are converted to wav so that they can
+            be played by QT."""
+        music_dir = os.path.join("assets", "music")
+        with open(os.path.join(music_dir, "music_data.json"), encoding="utf-8") as f:
+            self.music = json.load(f)
+        for key in self.music:
+            if key != "enable_music":
+                self.music[key]["path"] = os.path.join(music_dir, key)
+                if not os.path.exists(self.music[key]["path"] + ".wav"):
+                    sound = AudioSegment.from_mp3(self.music[key]["path"] + ".mp3")
+                    sound.export(self.music[key]["path"] + ".wav", format="wav")
+                self.music[key]["QSound"] = QSound(self.music[key]["path"] + ".wav")
+        self.mood = "happy"
+        self.playing = False
+        self.playlist = []
+        self.playlist_position = None
+
+    def change_mood(self, new_mood):
+        self.mood = new_mood
+
+    def make_playlist(self):
+        for key in self.music:
+            if key != "enable_music":
+                if self.music[key]["mood"] == self.mood:
+                    self.playlist.append(self.music[key]["QSound"])
+        random.shuffle(self.playlist)
+        self.playlist_position = 0
+
+    def on_tick(self):
+        if not self.music["enable_music"]:
+            return
+        if not self.playing:
+            if len(self.playlist) == 0:
+                self.make_playlist()
+            self.playlist[self.playlist_position].play()
+            self.playing = True
+            return
+        if self.playlist[self.playlist_position].isFinished():
+            self.playlist_position += 1
+            if self.playlist_position >= len(self.playlist):
+                self.playlist_position = 0
+            self.playing = False
+            return self.on_tick()

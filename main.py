@@ -12,7 +12,8 @@ import achievements
 import gscreen
 import promotions
 import saves
-from towns import Town, Service
+from towns import Town
+from service import Service
 import hints
 import logging
 import clipboard
@@ -38,10 +39,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.showFullScreen()  # the map image size is set based on the startup screen size, so don't resize!
         self.intermediate_towns = []
         self.towns = []
+        self.score = gscreen.Score()
         self.create_towns()  # loads the town data from a json file
         uic.loadUi('main_window.ui', self)  # loads the ui from Qt Designer
         self.wallet = gscreen.Wallet()
-        self.score = gscreen.Score()
         self.mode_show_map = True
         self.gr_left = QtWidgets.QGridLayout(self.frm_map)
         self.gr_left.setAlignment(QtCore.Qt.AlignTop)
@@ -416,6 +417,7 @@ You can find out more about it at https://timetablesgame.nz"""
         occured in the last second (which is 1 day in game-time if not on fast-mode)
         :return:
         """
+        self.music.on_tick()
         if not self.btn_pause.isChecked():
             win = self.img_map.update_time(self.tick_rate)
             """win will be of form [P/W/F] REASON where P = PASS/PROCEED (do nothing), W = WIN, F = FAIL
@@ -518,7 +520,7 @@ You can find out more about it at https://timetablesgame.nz"""
             connections.append(towns_data[name]['connections'])
             population = towns_data[name]['population']
             location = towns_data[name]['location']
-            new_town = Town(name, population, location)
+            new_town = Town(name, population, location, self.score)
             self.towns.append(new_town)
         for conns, town in zip(connections, self.towns):
             for conn in conns:
@@ -749,7 +751,7 @@ You can find out more about it at https://timetablesgame.nz"""
     def delete_service(self, service, widgets):
         """
         Removes a train service
-        :param service: the service to remove (towns.Service object)
+        :param service: the service to remove (service.Service object)
         :param widgets: the qtwidget representing that service in the list of services panel
         :return: None
         """

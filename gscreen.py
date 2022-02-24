@@ -20,9 +20,27 @@ class Score:
         self.highscores = []  # this should be loaded and saved with player's name etc. maybe online scores?
         self.year = 2020
         self.previous_pkms = [0.0]
+        self.goals = [100000, 400000, 3200000, 12800000, 38400000, 76800000, 153600000, 199680000, 259584000, 300000000,
+                      360000000, 396000000, 435600000, 457380000, 480249000, 504261450, 529474522, 555948248, 583745661,
+                      612932944, 643579591, 675758570, 709546499, 745023824, 782275015, 821388766, 862458204, 905581114,
+                      950860170, 1000000000]
+        self.goals_achieved = [False] * len(self.goals)
+        self.buffer = 0
 
     def increase(self, amount):
         self.current_pkm += amount
+
+    def put_on_buffer(self, amount):
+        """ This exists so that a run can be simulated and the pkms tentatively added, before the accounting
+            is confirmed. Once accounting is confirmed, the service just has to push the buffer with needing to
+            store the pkms."""
+        if self.buffer != 0:
+            logger.warning("buffer is not empty, overwriting buffer!")
+        self.buffer = amount
+
+    def push_buffer(self):
+        self.increase(self.buffer)
+        self.buffer = 0
 
     def get_score(self):
         return np.round(self.current_pkm, 0)
@@ -35,6 +53,8 @@ class Score:
         if time.year != self.year:
             assert time.year == self.year + 1  # the year must not increase by more than 1 at a time
             self.year = time.year
+            if self.current_pkm >= self.goals[self.year - 2020]:
+                self.goals_achieved[self.year - 2020] = True
             self.previous_pkms.append(self.current_pkm)
             self.current_pkm = 0.0
 

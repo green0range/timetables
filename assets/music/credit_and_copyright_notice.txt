@@ -1,0 +1,7 @@
+Music in this folder is created by and belongs to Jason Shaw. It is licensed under Creative Commons Attribution 4.0 International License.
+
+Find out more at https://audionautix.com/creative-commons-music
+
+Listen to more music by Jason Shaw at https://audionautix.com
+
+Music is unchanged, except for a conversion to WAV format, which is done whenever the game starts and can only find mp3 files. The orginal mp3 files are also left in the folder unchanged. (This is because WAV can be loaded into a QSound object whereas mp3 cannot.)
