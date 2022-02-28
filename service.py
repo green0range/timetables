@@ -12,17 +12,6 @@ logging.basicConfig(stream=sys.stdout,
                     level=logging.INFO)
 logger = logging.getLogger()
 
-class Passenger:
-    """
-    This is just to store passenger data.
-    """
-    def __init__(self, station_on, station_off, number, sleeper):
-        self.station_on = station_on
-        self.station_off = station_off
-        self.number = number
-        self.sleeper = sleeper
-
-
 class PatronageData:
     def __init__(self):
         """
@@ -402,6 +391,7 @@ class Service:
             flag so that if another object wants to get the stations, we know what order to give them in, even
             if they are currently reversed."""
         self.stations.reverse()
+        self.distance_between_stations.reverse()
         self.stations_reversed = not self.stations_reversed
 
     def get_earnings_report(self, returns_report=False):
@@ -588,7 +578,7 @@ class Service:
             price_list[i] = self.get_ticket_price(dist, sleeper=sleeper)
         return price_list
 
-    def confirm_passengers(self, root_station, stations, potential_passengers, price_list, sleeper):
+    def confirm_passengers(self, root_station_index, stations, potential_passengers, price_list, sleeper):
         """
         Not everyone who is interested in travelling by train will actually travel by train, this removes people if
         the price is too high, then returns a list of the remaining confirmed passengers.
@@ -603,7 +593,7 @@ class Service:
         if potential_passengers is None:
             return
         for i, (price, station) in enumerate(zip(price_list, stations)):
-            distance = root_station.getDistanceToNode(station)
+            distance = np.sum(self.distance_between_stations[root_station_index:root_station_index+i+1])
             alt_price = self.get_driving_cost(distance)
             if sleeper:
                 alt_price += 100
@@ -653,20 +643,50 @@ class Service:
                                                    np.ones(len(self.stations) - i) * np.sum(on_station)))
                 for j in range(0, len(on_station)):
                     # the predicted occupancy needs to decrease as people get off at their stops.
-                    current_occupancy[i + j + 1] -= on_station[j]
+                    current_occupancy[i + j] -= on_station[j]
             else:
                 # the train is not full, but there is not enough room for everyone who wants to join the train. We need
                 # to select who gets a seat.
                 number_overbooked = np.sum(on_station) - capacity - current_occupancy[i]
                 people_to_remove = self.split_to_list(number_overbooked, on_station, require_ints=True)
-                on_station -= people_to_remove
-                current_occupancy = np.concatenate(current_occupancy[:i - 1],
-                                                   np.ones(len(self.stations) - i) * np.sum(on_station))
+                confirmed_bookings_seat[i] -= people_to_remove
+                join_1 = current_occupancy[:i - 1]
+                join_2 = np.ones(len(self.stations) - i) * np.sum(confirmed_bookings_seat[i])
+                current_occupancy = np.concatenate((join_1, join_2))
                 for j in range(0, len(on_station)):
                     # the predicted occupancy needs to decrease as people get off at their stops.
-                    current_occupancy[i + j + 1] -= on_station[j]
-        print(current_occupancy)
+                    current_occupancy[i + j] -= on_station[j]
+        print(f"{current_occupancy}, {np.sum(current_occupancy)}")
         return confirmed_bookings_seat
+
+    def do_promotion(self, p):
+        """
+        Simulates a promotion.
+        :param p: The promotion to sumulate.
+        :return: on_indices (where extra passengers board), off_index (where extras disembark),
+                 boost_amount (percentage of additional extra passengers). If a specific destination
+                 is not targeted, set off_index=-1, then passenger volumes overall will be increased,
+                 by the boost_amount, with on_indices and off_index be irrelevant.
+        """
+        on_indices, off_index, boost_amount = [], -1, 0
+        if p.get_type() == "poster-target":
+            boost_amount = (random.randint(0, 5)/20) * len(p.get_display_towns())
+            for i, town in enumerate(self.stations):
+                if p.get_target_name() == town.get_name():
+                    off_index = i
+                if town.get_name() in p.get_display_towns():
+                    on_indices.append(i)
+            if off_index == -1:
+                """ This is the case where the passenger needs to take a connecting train to reach the target."""
+                for i, ct in enumerate(self.stations):
+                    if ct in p.connection_towns:
+                        off_index = i
+                        break
+        if p.get_type() == "poster-service" or p.get_type() == "promote-service":
+            bounds = p.get_effective_increase_bounds()
+            boost_amount = (bounds[1] - bounds[0]) * random.random() + bounds[0]
+        return on_indices, off_index, boost_amount
+
 
     def get_passengers(self, time, dow, reputation):
         """
@@ -675,6 +695,11 @@ class Service:
         It must execute very quickly. I do not want to rely on a cache,
         like the previous version. Multiprocessing may be required when more
         than X train lines are created.
+        todo: * incorporate promotions [done 28 Feb]
+              * incorporate economic partner bonus
+              * different traffic for weekends
+              * factor in reputation
+              * report back the passenger numbers / statistics
         :param time: The time the service leaves the first station
         :param dow: The day of the week
         :param reputation: The reputation of Tranz-Passenger
@@ -692,14 +717,39 @@ class Service:
            requirements must be satisfied for passengers to buy a sleeper ticket.'''
         destination_pop = np.zeros(len(self.stations))
         destination_ttimes = np.zeros(len(self.stations))
+        promotion_data = [[]] * len(self.promotions)
+        """ Compute passenger increases due to promotions"""
+        for i, p in enumerate(self.promotions):
+            on_indices, off_index, boost_amount = self.do_promotion(p)
+            promotion_data[i] = [on_indices, off_index, boost_amount]
+        """ Every iteration of this loop corresponds to the train arriving at a new station and picking up and letting
+            off passengers."""
         for i, town in enumerate(self.stations):
             destination_pop[i] = town.population
             if i != 0:
                 destination_ttimes[i] = self.get_journey_length(i-1, i).total_seconds()
         confirmed_bookings_seat = [None] * len(self.stations)
         confirmed_bookings_sleep = [None] * len(self.stations)
+        passengers_before_promotion = 0
+        have_a_target_promotion = False
+        potential_retain_rate = 1
+        overall_potential_increase_promotion = 0
         for i, town in enumerate(self.stations):
             potential_passengers = town.get_want_to_travels(time.date(), time.time())/town.number_of_directions()
+            """ p[0] is a list of indices for which extra people will be boarding the train due to a promotion,
+                p[2] is the percentage of extra passengers, p[1] is the index they will leave the train"""
+            extras_disembarking = []
+            extras_disembarking_index = []
+            for p in promotion_data:
+                if p[1] == -1:
+                    increase_from_promotions = np.round(p[2] * potential_passengers)
+                    overall_potential_increase_promotion += increase_from_promotions
+                    potential_passengers += increase_from_promotions
+                elif i in p[0]:
+                    have_a_target_promotion = True
+                    increase_from_promotions = np.round(p[2] * potential_passengers)
+                    extras_disembarking.append(increase_from_promotions)
+                    extras_disembarking_index.append(p[1])
             destination_weights = destination_pop[i+1:] + 1/(destination_ttimes[i+1:] - (np.ones(len(self.stations) - i - 1) * sum(destination_ttimes[:i])))
             if night_train:
                 potential_sleep = np.round((2 / 3) * potential_passengers, 0)
@@ -713,13 +763,47 @@ class Service:
             sleep_ticket_price_list = self.get_ticket_price_list(sleep_destinations, True)
             """ We now have a list of prices and a list of how many people want to travel to which stations. Next,
                 we compare the price to driving to find how many will actually buy a ticket."""
-            confirmed_bookings_seat[i] = self.confirm_passengers(town, self.stations[i+1:], seat_destinations, seat_ticket_price_list, False)
-            confirmed_bookings_sleep[i] = self.confirm_passengers(town, self.stations[i+1:], sleep_destinations, sleep_ticket_price_list, True)
+            confirmed_bookings_seat[i] = self.confirm_passengers(i, self.stations[i+1:], seat_destinations, seat_ticket_price_list, False)
+            confirmed_bookings_sleep[i] = self.confirm_passengers(i, self.stations[i+1:], sleep_destinations, sleep_ticket_price_list, True)
+            potential_retain_rate += sum(confirmed_bookings_seat[i])/potential_passengers
+            if len(self.promotions) > 0 and have_a_target_promotion:
+                passengers_before_promotion += np.sum(confirmed_bookings_seat[i])
+                if night_train:
+                    passengers_before_promotion += np.sum(confirmed_bookings_sleep[i])
+            """ Add in extras due to promotions """
+            for j in range(len(extras_disembarking)):
+                if night_train:
+                    seat_disembark = np.round((2 / 3) * extras_disembarking[j], 0)
+                    sleep_disembark = np.round((1 / 3) * extras_disembarking[j], 0)
+                    confirmed_bookings_sleep[i][extras_disembarking_index[j] - i - 1] += sleep_disembark
+                else:
+                    seat_disembark = extras_disembarking[j]
+                    print(f"disembark_index: {extras_disembarking_index[j]}, i: {i}")
+                confirmed_bookings_seat[i][extras_disembarking_index[j] - i - 1] += seat_disembark
+        potential_retain_rate /= len(self.stations)
+        print(f"potential retain rate: {potential_retain_rate}")
         """ Now we need to check that there is space for everyone on the train and that it is not over-booked."""
         capacity_seat = self.car_capacity['passenger car'] * self.config[1]
         capacity_sleep = self.car_capacity['sleeper car'] * self.config[2]
         seat_passengers = self.remove_overbookings(capacity_seat, confirmed_bookings_seat)
         sleep_passengers = self.remove_overbookings(capacity_sleep, confirmed_bookings_sleep)
+        """ We need to report additional passengers back to the promotion so the player can gauge how success it was.
+            However this is not particularly exact, and should be displayed with an *approximately* clause"""
+        if len(self.promotions) > 0:
+            if have_a_target_promotion:
+                passengers_after_promotion = 0
+                for i in range(len(seat_passengers)):
+                    passengers_after_promotion += np.sum(seat_passengers[i])
+                    if night_train:
+                        passengers_after_promotion += np.sum(sleep_passengers[i])
+                promotion_passenger_total = passengers_after_promotion - passengers_before_promotion
+                if promotion_passenger_total < 0:
+                    promotion_passenger_total = 0  # this is the case where the train was overbooked to start with.
+                for p in self.promotions:
+                    p.report_back(promotion_passenger_total/len(self.promotions))
+            else:
+                for p in self.promotions:
+                    p.report_back(potential_retain_rate * overall_potential_increase_promotion)
         return seat_passengers, sleep_passengers
 
     def score_passengers(self, seat_p, sleep_p):
@@ -735,7 +819,7 @@ class Service:
             for j in range(len(seat_p[i])):
                 d = np.sum(distances[:j])
                 score += d * seat_p[i][j]
-                if sleep_p is not None:
+                if sleep_p is not None and sleep_p[i] is not None:
                     score += d * sleep_p[i][j]
         return score
 
@@ -744,12 +828,13 @@ class Service:
         for i in range(len(seat_p)):
             for j in range(len(seat_p[i])):
                 ticket_revenue += self.get_ticket_price(j - i) * seat_p[i][j]
-                if sleep_p is not None:
+                if sleep_p is not None and sleep_p[i] is not None:
                     ticket_revenue += self.get_ticket_price(j - i, sleeper=True) * sleep_p[i][j]
         return ticket_revenue
 
     def run_these_services(self, services_to_run, day_of_week, score, company_reputation):
         profit = 0
+        returning_services = []
         for service in services_to_run:
             seat_passengers, sleep_passengers = self.get_passengers(service, day_of_week, company_reputation)
             score.put_on_buffer(self.score_passengers(seat_passengers, sleep_passengers))
@@ -757,6 +842,12 @@ class Service:
             profit -= self.calculate_gst(profit)
             profit -= self.calculate_cost()
             profit -= self.calculate_tax(profit)
+            if self.returns and not self.stations_reversed:
+                returning_services.append(service + self.get_journey_length(0, len(self.stations)-1) + datetime.timedelta(minutes=10))
+        if len(returning_services) > 0:
+            self.reverse_stations()
+            self.run_these_services(returning_services, day_of_week, score, company_reputation)
+            self.reverse_stations()
         return profit
 
     def run(self, increment, time, wallet, score, company_reputation):

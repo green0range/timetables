@@ -5,6 +5,7 @@ import numpy as np
 
 class Promotion:
     def __init__(self, image):
+        self.connection_towns = []
         self.start_date = None
         self.image = image
         self.date_expires = None
@@ -15,10 +16,8 @@ class Promotion:
         self.services_to_reach_target = []
         self.effective_increase_bounds = [0, 0.001]
         self.total_additional_passenger = 0
-        self.total_additional_money = 0
 
-    def report_back(self, additional_passenger, addition_money):
-        self.total_additional_money += np.round(addition_money, 2)
+    def report_back(self, additional_passenger):
         self.total_additional_passenger += int(additional_passenger)
 
     def add_print_media(self, service_to_promote, date, services, only_in_towns_serviced):
@@ -207,6 +206,7 @@ class Promotion:
                     for town in s.get_stations():
                         if town in self.service_with_target.get_stations():
                             connects = True
+                            self.connection_towns.append(town)
                             if not town.get_name() in putsPosters:
                                 putsPosters.append(town.get_name())  # we need to put a poster in the transfer station
                                 found_putsPosters += 1  # so that the to_destination train has a pickup location.
@@ -250,9 +250,15 @@ class Promotion:
 
     def check_expiry(self, game_time):
         if game_time > self.date_expires:
-            self.image.display_new_achievement([f"Promotion Ended, {int(self.total_additional_passenger)} extra passengers travelled \nbecause of the promotion spending an extra ${self.total_additional_money}"], dont_add_preamble=True)
+            self.image.display_new_achievement([f"Promotion Ended, approximately {int(self.total_additional_passenger)} extra passengers travelled \nbecause of the promotion."], dont_add_preamble=True)
             return True
         return False
+
+    def get_target_name(self):
+        return self.target
+
+    def get_display_towns(self):
+        return self.putsPosters
 
     def get_weights_increase(self, stations):
         """

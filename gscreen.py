@@ -34,9 +34,7 @@ class Score:
         """ This exists so that a run can be simulated and the pkms tentatively added, before the accounting
             is confirmed. Once accounting is confirmed, the service just has to push the buffer with needing to
             store the pkms."""
-        if self.buffer != 0:
-            logger.warning("buffer is not empty, overwriting buffer!")
-        self.buffer = amount
+        self.buffer += amount
 
     def push_buffer(self):
         self.increase(self.buffer)
@@ -60,7 +58,7 @@ class Score:
 
 
 class Wallet:
-    def __init__(self, starting_amount=5e7):
+    def __init__(self, starting_amount=5e10):
         self.file = None
         self.money = starting_amount
         self.overdraft = 0
