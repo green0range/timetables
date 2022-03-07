@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
@@ -129,6 +130,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_exit.clicked.connect(self.save_and_exit)
         self.company_reputation = 0.5
         self.btn_disable_hint.clicked.connect(self.hints.setDisabled)
+        self.fr_hint.setVisible(False)
 
     def set_view(self, id):
         """
@@ -177,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow):
         btn_close.clicked.connect(self.close_report)
         self.gr_left.addWidget(btn_close)
 
-    def start_game(self, rb1, rb2, rb3):
+    def start_game(self, rb1, rb2, rb3, difficulty):
         """
         Starts the game. This method is called when the start game button is pressed on the menu screen. It
         sets the save slot, enables all the buttons, removes the menu from the screen and starts the game
@@ -187,6 +189,8 @@ class MainWindow(QtWidgets.QMainWindow):
         :param: rb3: the radio button that indicates if slot 3 is selected.
         :return: None
         """
+        if difficulty == "Unlimited Money":
+            self.wallet.money = 99999999999999
         self.btn_bounding_nz.setChecked(True)
         slot = None
         if rb1.isChecked():
@@ -220,6 +224,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_bounding_n.setEnabled(True)
         self.btn_bounding_s.setEnabled(True)
         self.btn_achievements.setEnabled(True)
+        self.fr_hint.setVisible(True)
         self.close_report()
 
     def delete_save(self, slot, radiobutton):
@@ -315,9 +320,9 @@ class MainWindow(QtWidgets.QMainWindow):
         lbl_message2.setFont(QtGui.QFont(self.message_font, 8))
         lbl_message2.setWordWrap(True)
         cmb_difficulty = QtWidgets.QComboBox()
-        cmb_difficulty.addItems(["Normal difficulty"])
+        cmb_difficulty.addItems(["Normal Difficulty", "Unlimited Money"])
         btn_begin = QtWidgets.QPushButton("Start Game")
-        btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3))
+        btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3, cmb_difficulty.currentText()))
         ''' If release, this will go to a highscores webpage, but for now I will use it to get feedback'''
         btn_highscore = QtWidgets.QPushButton("Send Feedback")
         btn_highscore.clicked.connect(lambda: webbrowser.open("https://docs.google.com/forms/d/e/1FAIpQLSdnpQeyxYQPsScqqeVxJuE9IL74KrecaWQhIOkMUz5ov5wKCA/viewform?usp=sf_link"))
@@ -569,7 +574,6 @@ You can find out more about it at https://timetablesgame.nz"""
                 j += 1
             ckb = QtWidgets.QCheckBox(node.get_name(), parent=self.frm_intermediate_stops)
             ckb.stateChanged.connect(self.update_unconfirmed_service)
-            # todo: rotate ckb, see -> https://stackoverflow.com/questions/43388464/rotate-whole-qwidget-by-angle
             self.gr_intermediate_stops.addWidget(ckb, j, i)
             if node is departure_town or node is arrival_town:
                 ckb.setChecked(True)
@@ -660,28 +664,10 @@ You can find out more about it at https://timetablesgame.nz"""
         im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
         return QtGui.QPixmap.fromImage(im)
 
-    def plot_ridership(self, passenger_numbers, earnings):
-        total_seat = []
-        total_sleep = []
-        date = []
-        ticks = []
-        if len(earnings) > 100:
-            earnings = earnings[len(earnings)-100:]
-            passenger_numbers = passenger_numbers[len(earnings)-5]
-        for i, (numbers, earn) in enumerate(zip(passenger_numbers, earnings)):
-            if len(earnings) > 50:
-                if i % 2 == 0:
-                    ticks.append(datetime.datetime.strptime(earn[1], "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
-            else:
-                ticks.append(datetime.datetime.strptime(earn[1], "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
-            if len(numbers) == 4:
-                total_seat.append(np.sum(numbers[0]))
-                total_sleep.append(np.sum(numbers[2]))
-                date.append(datetime.datetime.strptime(earn[1], "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
+    def plot_ridership(self, seat, sleep, date):
         fig1, ax1 = pyplot.subplots(figsize=(3, 2), dpi=130)
         canvas = FigureCanvas(fig1)
-        ax1.plot(date, total_seat)
-        ax1.set_xticks(ticks)
+        ax1.plot(seat)
         ax1.set_title("Ridership")
         ax1.set_xlabel("date")
         ax1.set_ylabel("Number of people")
@@ -690,6 +676,7 @@ You can find out more about it at https://timetablesgame.nz"""
         canvas.draw()
         width, height = canvas.get_width_height()
         im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
+        pyplot.close(fig1)
         return QtGui.QPixmap.fromImage(im)
 
     def display_report(self, service):
@@ -699,11 +686,56 @@ You can find out more about it at https://timetablesgame.nz"""
             if self.map_image is not None:
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
-        passenger_numbers = service.get_passenger_numbers_report()
+        seat_numbers = service.number_seat_passengers_all_time
+        date = service.time_service_was_run
+        print(seat_numbers)
+        sleep_numbers = service.number_sleep_passengers_all_time
         earnings = service.get_earnings_report()
         lbl_title = QtWidgets.QLabel(f"Service Report for {service.get_name()}")
         lbl_title.setFont(QtGui.QFont(self.title_font, 16))
-        if len(passenger_numbers) == 0:
+        """ Generate some information about the train service."""
+        information = f"Train information: \nConfiguration: {service.config[0]} Engine(s), {service.config[1]} Passenger cars, "
+        information += f"{service.config[2]} Sleeper cars \nTotal Capacity: {service.get_capacity()} Passengers\n"
+        information += f"Ticket prices: ${service.fares[0]} for seat, ${service.fares[1]} for sleepers\n"
+        list_times = ""
+        for i, time in enumerate(service.departure_times):
+            if i == len(service.departure_times)-1:
+                list_times += time.strftime("%H:%M")
+            else:
+                list_times += time.strftime("%H:%M") + ", "
+        information += f"Departs {service.stations[0].get_name()} at {list_times}\n"
+        s = service.get_journey_length(0, len(service.stations)-1).total_seconds()
+        hours, remainder = divmod(s, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        runs_on_days = []
+        for i in range(len(service.days)):
+            if service.days[i]:
+                runs_on_days.append(days[i])
+        runs_on_days_text = ""
+        if len(days) == 1:
+            runs_on_days_text = days[0]
+        else:
+            for i, day in enumerate(runs_on_days):
+                if i == len(runs_on_days) - 1:
+                    runs_on_days_text += "and " + day
+                    break
+                runs_on_days_text += day + ", "
+        information += f"Train runs on {runs_on_days_text}"
+        information += f"Arrives at {service.stations[len(service.stations)-1].get_name()} after {hours} hrs, {minutes} mins\n"
+        stops = ""
+        for i, station in enumerate(service.stations):
+            if i == len(service.stations) - 1:
+                stops += "and " + station.get_name()
+                break
+            stops += station.get_name() + ", "
+        information += f"Train stops at {stops}\n"
+        if service.returns:
+            information += f"Train returns to {service.stations[0].get_name()} along the same route"
+        else:
+            information += f"Train has no return journey"
+        lbl_info = QtWidgets.QLabel(information)
+        if len(seat_numbers) == 0:
             self.gr_left.addWidget(lbl_title, 0, 0)
             lbl_404 = QtWidgets.QLabel("404.\nNot found :(\n\nMaybe the train hasn't made its first journey yet?\n\nTrains only run at their scheduled time. Check the game is not paused \nand wait for the game time to reach the next scheduled time.")
             lbl_404.setFont(QtGui.QFont(self.message_font, 14))
@@ -712,6 +744,15 @@ You can find out more about it at https://timetablesgame.nz"""
             close.clicked.connect(self.close_report)
             self.gr_left.addWidget(close, 4, 0, 1, 2)
             return
+        self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
+        self.gr_left.addWidget(lbl_info, 1, 0, 1, 2)
+        lbl_passengers_all_time = QtWidgets.QLabel()
+        lbl_passengers_all_time.setPixmap(self.plot_ridership(seat_numbers, sleep_numbers, date))
+        self.gr_left.addWidget(lbl_passengers_all_time, 2, 0)
+        close = QtWidgets.QPushButton("Close")
+        close.clicked.connect(self.close_report)
+        self.gr_left.addWidget(close, 10, 0, 1, 2)
+        '''
         col_num = len(passenger_numbers[0][0])
         self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
         lbl_profit_plot = QtWidgets.QLabel()
@@ -747,6 +788,7 @@ You can find out more about it at https://timetablesgame.nz"""
         close.clicked.connect(self.close_report)
         self.gr_left.addWidget(close, 10, 0, 1, 2)
         self.fill_report_table(table, service.get_stations(), passenger_numbers, earnings)
+        '''
 
     def delete_service(self, service, widgets):
         """
@@ -755,7 +797,7 @@ You can find out more about it at https://timetablesgame.nz"""
         :param widgets: the qtwidget representing that service in the list of services panel
         :return: None
         """
-        self.company_reputation = self.company_reputation * 0.8  # decrease by 20%
+        self.company_reputation -=1
         widgets[0].removeWidget(widgets[1])
         widgets[0].removeWidget(widgets[2])
         widgets[0].removeWidget(widgets[3])
@@ -1083,12 +1125,11 @@ You can find out more about it at https://timetablesgame.nz"""
             if service.is_connecting(terminal_stations, times_at_terminal_stations):
                 service.has_connection = True
                 self.services[i].has_connection = True
-                self.services[i].pd.chance_of_recalc = 1
                 logger.debug(f"{self.services[i].get_name()} connects to {service.get_name()}")
                 break
 
     def click_confirm_new_route(self):
-        self.company_reputation = self.company_reputation * (1.0 + 0.1 * (self.unconfirmed_service.get_capacity()/486))
+        self.company_reputation += random.randint(0, 2)
         name = self.txt_service_name.text()
         self.update_unconfirmed_service()
         response = self.unconfirmed_service.confirm_service(name, self.wallet, self.img_map.get_time().strftime("%d/%m/%y"))

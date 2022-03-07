@@ -254,6 +254,14 @@ class Promotion:
             return True
         return False
 
+    def get_lasting_effect(self):
+        increase = self.total_additional_passenger / 100
+        if increase > 1.5:
+            increase = 1.5
+        elif increase < 1:
+            increase = 1
+        return increase
+
     def get_target_name(self):
         return self.target
 

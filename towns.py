@@ -36,7 +36,16 @@ class Town:
     def number_of_directions(self):
         return len(self.connections)
 
-    def generate_want_to_travels(self):
+    def increase_percentage_willing(self, increase_amount, percentage=False):
+        if percentage:
+            self.percentage_willing_to_use_public_transport *= increase_amount
+        else:
+            self.percentage_willing_to_use_public_transport += increase_amount
+        if self.percentage_willing_to_use_public_transport > 0.95:
+            self.percentage_willing_to_use_public_transport = 0.95
+        print(f"percent_willing increased to {self.percentage_willing_to_use_public_transport} in {self.name}")
+
+    def generate_want_to_travels(self, rep_score, dow):
         """
         This should find the number of people who want to travel out of the city on any given day. I'm not quite sure
         what this will be and propose the following study:
@@ -50,29 +59,52 @@ class Town:
         If anyone knows of a study like this, please encode the result in this method!
         Anyway, once we have the formula, we return that multiplied by the percentage of people willing to travel on
         public transport, with some added random flucations.
+        param: rep_score: this is the reputation of the company and particular service.
         :return:
         """
         if self.score.year != self.year:
             if self.score.goals_achieved[self.year - 2020]:
                 ''' If all targets are hit, the percentage willing to use public transport will reach 90% at 2050.
                     The idea behind this is that more people will be willing to use PT if they can see it is 
-                    successful.'''
-                self.percentage_willing_to_use_public_transport += 0.0163
+                    successful.
+                    percentage_willing can also be increased by running successful ads, so it is caped at 95%'''
+                self.percentage_willing_to_use_public_transport = np.minimum(self.percentage_willing_to_use_public_transport + 0.0163, 0.95)
             else:
                 ''' Give a smaller increase so that it is possible to recover.'''
-                self.percentage_willing_to_use_public_transport += 0.005
+                self.percentage_willing_to_use_public_transport = np.minimum(
+                    self.percentage_willing_to_use_public_transport + 0.005, 0.95)
             print(f"Percentage willing to use PT: {self.percentage_willing_to_use_public_transport}")
             self.year = self.score.year
             self.population *= 1.02  # 2% population growth
-        daily_travel_weights = [1, 1, 1, 2, 2, 5, 10, 50, 20, 10, 10, 10, 15, 10, 10, 30, 10, 40, 40, 40, 20, 10, 5, 2]
+        """0 = Monday, 1 = T, 2 = W, 3 = T, 4 = F, 5 = Saturday, 6 = Sunday"""
+        if dow == 5 or dow == 6:
+            daily_travel_weights = [2, 1, 1, 1, 1, 1, 1, 1, 2, 5, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 10, 10, 5]
+        elif dow == 4:
+            daily_travel_weights = [2, 1, 1, 2, 2, 5, 10, 50, 20, 10, 10, 10, 15, 10, 10, 30, 10, 40, 40, 40, 20, 10, 10, 5]
+        else:
+            daily_travel_weights = [1, 1, 1, 2, 2, 5, 10, 50, 20, 10, 10, 10, 15, 10, 10, 30, 10, 40, 40, 40, 20, 10, 5, 2]
         model = np.minimum(np.log(self.population**3)*np.sqrt(self.population), self.population*0.7)
         ''' This model is my guess. Smaller settlements have a relatively high proportion of travellers because they
             need to travel to a larger settlement for work, shopping etc, whereas the proportion of people traveling 
             lowers as the town gets larger because people can work and get stuff locally so only need to travel to 
             visit people go on holiday, less frequent business trips etc. '''
-        variation = 0.5 * (random.random() - 1)  # variation between -0.25 and 0.25
+        variation = 0.3 * (random.random() - 1)  # variation between -0.25 and 0.25
         want_to_travel_all_modes = model + (variation * model)
-        self.want_to_travel = self.percentage_willing_to_use_public_transport * want_to_travel_all_modes
+        if 1 <= rep_score < 2:
+            willing_bonus = 0.05
+        elif 2 <= rep_score < 4:
+            willing_bonus = 0.1
+        elif 4 <= rep_score < 5:
+            willing_bonus = 0.15
+        elif 5 <= rep_score < 7:
+            willing_bonus = 0.17
+        elif 7 <= rep_score < 10:
+            willing_bonus = 0.185
+        elif rep_score >= 10:
+            willing_bonus = 0.2
+        else:
+            willing_bonus = 0
+        self.want_to_travel = (self.percentage_willing_to_use_public_transport + willing_bonus) * want_to_travel_all_modes
         """ Now account for the visitors that r currently in the town. All recorded visitors arrived by rail, so they
             are willing to travel back (or onwards) by rail. Some of them will be staying permanently, or not actually
             be a visitor and have just returned home, so a number of the visitors are discounted, then the rest are
@@ -89,7 +121,7 @@ class Town:
             result[i] = pieces * w
         return result
 
-    def get_want_to_travels(self, date, time):
+    def get_want_to_travels(self, date, time, rep_score=0, dow=0):
         """
         Each day, a new group of people who want to travel are generated, based on population size, with some random
         chance. The available travelers are those people, plus any positive count of visitors. When a person leaves
@@ -103,10 +135,10 @@ class Town:
         :return: number of people available to travel
         """
         if self.last_date_want_to_travels_generated is None:
-            self.generate_want_to_travels()
+            self.generate_want_to_travels(rep_score, dow)
             self.last_date_want_to_travels_generated = date
         elif self.last_date_want_to_travels_generated != date:
-            self.generate_want_to_travels()
+            self.generate_want_to_travels(rep_score, dow)
             self.last_date_want_to_travels_generated = date
             logger.debug(f"generated want to travels for date {date}")
         self.hour_of_train_departure = time.hour

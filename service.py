@@ -12,174 +12,19 @@ logging.basicConfig(stream=sys.stdout,
                     level=logging.INFO)
 logger = logging.getLogger()
 
-class PatronageData:
-    def __init__(self):
-        """
-        Calculating patronage is very expensive. This stores the patronage from each time it is calculated, so that
-        sometimes we can just use a random selection of previous data.
-
-        When a route is created, it will have an empty PatronageData (PD) object. Call PD.get_run_instance(), if it
-        returns -1, you need to do a full calculation. It will always return -1 if there is no data, as data is added
-        the chance of returning -1 will decrease, but never be quite 0, so some new data can always be added.
-
-        if a reputation change occurs, call PD.update_reputation(new_reputation) and PD will adjust the weights placed
-        on old data and be more likely to require recalculations
-
-        The recalc method must send new data to PD.push_data(seat_on, seat_off, sleeper_on, sleeper_off, total_fares)
-        """
-        self.data = []
-        self.return_data = []
-        self.weights = []
-        self.return_weights = []
-        self.chance_of_recalc = 1
-        self.company_reputation = 0.5
-        self.seat_capacity = 0
-        self.sleeper_capacity = 0
-        self.price_per_station_seat = 1
-        self.price_per_station_sleep = 2
-
-    def set_capacity(self, seat, sleeper):
-        self.seat_capacity = seat
-        self.sleeper_capacity = sleeper
-
-    def update_reputation(self, reputation):
-        if reputation != self.company_reputation:
-            self.company_reputation = reputation
-            ''' Prune the data so data from old reputation scores don't skew results '''
-            try:
-                self.data = self.data[len(self.data) - 10:]
-                self.weights = self.weights[len(self.weights) - 10:]
-                self.return_data = self.return_data[len(self.return_data) - 10:]
-                self.return_weights = self.return_weights[len(self.return_weights) - 10:]
-            except IndexError:  # if len(data) < 10, don't worry about it!
-                pass
-            for i in range(len(self.weights)):
-                self.weights[i] /= 3  # sets all weights to 1/3rd of original value
-            for i in range(len(self.return_weights)):
-                self.return_weights[i] /= 3  # sets all weights to 1/3rd of original value
-            self.chance_of_recalc += 0.7
-
-    def get_run_instance(self, is_return, promos, stations):
-        """ Promotions are added here because it is faster and easier than doing a complete recalc of the patronage,
-            this means promotions will only take effect some of the time as there is always a chance of doing a recalc,
-            however this is fine as on average, the route will run with the promotion. It also increases the randomness
-            of how the promotion will be perceived which is more realistic anyway.
-        """
-        if self.chance_of_recalc >= 1:
-            return -1
-        if random.random() < self.chance_of_recalc:
-            return -1
-        try:
-            if is_return:
-                choice = random.choices(self.return_data, self.return_weights, k=1)[0]
-            else:
-                choice = random.choices(self.data, self.weights, k=1)[0]
-            for p in promos:
-                if p.get_type() == "poster-target":
-                    """ A poster-target is a promotion where travel to a certain destination is promoted via poster"""
-                    puts_posters_index, target_index = p.get_weights_increase(stations)
-                    pweights1 = np.zeros(len(stations))
-                    for index in puts_posters_index:
-                        pweights1[index] = 1
-                    pweights2 = np.zeros(len(stations))
-                    pweights2[target_index] = 1
-                    if is_return:
-                        pweights1 = pweights1[::-1]
-                        pweights2 = pweights2[::-1]
-                    seat_travelers = choice[1][target_index]
-                    sleep_travelers = choice[3][target_index]
-                    assert self.seat_capacity - seat_travelers >= 0
-                    traveler_increase_seat = np.minimum(seat_travelers * 0.4, self.seat_capacity - seat_travelers)
-                    traveler_increase_sleeper = np.minimum(sleep_travelers * 0.4,
-                                                           self.sleeper_capacity - sleep_travelers)
-                    seat_increase = np.round((pweights1 * traveler_increase_seat) / len(puts_posters_index), 0)
-                    sleep_increase = np.round((pweights1 * traveler_increase_sleeper) / len(puts_posters_index), 0)
-                    choice[0] = choice[0] + seat_increase
-                    choice[2] = choice[2] + sleep_increase
-                    choice[1] = choice[1] + pweights2 * np.sum(seat_increase)
-                    choice[3] = choice[3] + pweights2 * np.sum(sleep_increase)
-                    stations_past = target_index - np.mean(puts_posters_index)
-                    extra_passengers = traveler_increase_seat + traveler_increase_sleeper
-                    extra_money = stations_past * self.price_per_station_seat * traveler_increase_seat + stations_past * self.price_per_station_sleep * traveler_increase_sleeper
-                    choice[4] += extra_money
-                    p.report_back(extra_passengers, extra_money)
-                elif p.get_type() == "poster-service":
-                    """ A poster-service promotion is where a particular service is promoted via poster,
-                        if the promotion is registered with us, we are that service."""
-                    for i in range(len(choice[0]) - 1):
-                        total_seated = np.sum(choice[0][:i]) - np.sum(choice[1][:i])
-                        total_sleeper = np.sum(choice[2][:i]) - np.sum(choice[3][:i])
-                        percent_increase = 0.2 * random.random()
-                        seat_increase = np.minimum(choice[0][i] * percent_increase, self.seat_capacity -
-                                                   total_seated)
-                        sleep_increase = np.minimum(choice[0][i] * percent_increase, self.sleeper_capacity -
-                                                    total_sleeper)
-                        going_to = random.randint(1, len(choice[0]) - i)  # where the additional passengers get off.
-                        choice[0][i] += seat_increase
-                        choice[1][i + going_to] += seat_increase
-                        choice[2][i] += sleep_increase
-                        choice[3][i + going_to] += sleep_increase
-                        """ add the revenue increase"""
-                        extra_passengers = seat_increase + sleep_increase
-                        extra_money = going_to * self.price_per_station_seat * seat_increase + going_to * self.price_per_station_sleep * sleep_increase
-                        choice[4] += extra_money
-                        p.report_back(extra_passengers, extra_money)
-                elif p.get_type() == "promote-service":
-                    for i in range(len(choice[0]) - 1):
-                        total_seated = np.sum(choice[0][:i]) - np.sum(choice[1][:i])
-                        total_sleeper = np.sum(choice[2][:i]) - np.sum(choice[3][:i])
-                        bounds = p.get_effective_increase_bounds()
-                        percent_increase = (bounds[1] - bounds[0]) * random.random() + bounds[0]
-                        seat_increase = np.minimum(choice[0][i] * percent_increase, self.seat_capacity -
-                                                   total_seated)
-                        sleep_increase = np.minimum(choice[0][i] * percent_increase, self.sleeper_capacity -
-                                                    total_sleeper)
-                        going_to = random.randint(1, len(choice[0]) - i)  # where the additional passengers get off.
-                        choice[0][i] += seat_increase
-                        choice[1][i + going_to] += seat_increase
-                        choice[2][i] += sleep_increase
-                        choice[3][i + going_to] += sleep_increase
-                        """ add the revenue increase"""
-                        extra_passengers = seat_increase + sleep_increase
-                        extra_money = going_to * self.price_per_station_seat * seat_increase + going_to * self.price_per_station_sleep * sleep_increase
-                        choice[4] += extra_money
-                        p.report_back(extra_passengers, extra_money)
-            logger.debug(f"PatronageData selected {choice}")
-            return choice
-        except IndexError:  # this error occurred in testing, but I don't know why
-            return -1
-
-    def push_data(self, seat_on, seat_off, sleeper_on, sleeper_off, total_fares, is_return):
-        if is_return:
-            self.return_data.append([seat_on, seat_off, sleeper_on, sleeper_off, total_fares])
-            self.return_weights.append(1)
-        else:
-            self.data.append([seat_on, seat_off, sleeper_on, sleeper_off, total_fares])
-            self.weights.append(1)
-        self.chance_of_recalc = 0.95 * self.chance_of_recalc
-        if self.chance_of_recalc < 0.1:
-            self.chance_of_recalc = 0.1  # 1 in 10 runs must use an original calculation.
-        logger.debug(f"new chance of recalc is {self.chance_of_recalc}")
-
-    def set_price_per_station(self, seat, sleep):
-        """ We need to know this because promotions are all dealt with at the PD level. Promotions cause a percentage
-            increase to the save patronage data, and we need to know how much extra revenue to give for the patronage
-            increase."""
-        self.price_per_station_seat = seat
-        self.price_per_station_sleep = sleep
-
-    def change_reputation(self):
-        logger.warning("NOT IMPLEMENTED YET!")
-
-
 class Service:
     def __init__(self, save_manager):
+        self.time_service_was_run = []
+        self.time_service_was_run_return = []
+        self.number_sleep_passengers_all_time_return = []
+        self.number_seat_passengers_all_time_return = []
+        self.number_seat_passengers_all_time = []
+        self.number_sleep_passengers_all_time = []
         self.distance_between_stations = None
         self.name = ""
         self.name = ""
         self.save_manager = save_manager
         self.confirmed = False
-        self.pd = PatronageData()
         self.my_uuid = uuid.uuid4()
         # my upfront costs are based on this: https://www.linkedin.com/pulse/case-overnight-sleeper-train-between-auckland-wellington-nicolas-reid/
         self.up_front_costs = {"engine": 2.5e6,
@@ -532,9 +377,6 @@ class Service:
             if self.name == "":
                 self.name = self.create_name()
             self.passenger_confidence = 0.1 + random.random() * (0.3 - 0.1)  # start at random between 10% and 30%
-            self.pd.set_capacity(self.car_capacity['passenger car'] * self.config[1],
-                                 self.car_capacity['sleeper car'] * self.config[2])
-            self.pd.set_price_per_station(self.fares[0] / len(self.stations), self.fares[1] / len(self.stations))
             """ Now pre-compute all the distances between stations as this is used a lot when the service is run."""
             self.distance_between_stations = []
             for i in range(len(self.stations)):
@@ -612,12 +454,13 @@ class Service:
 
     @staticmethod
     def split_to_list(number, weights, require_ints=False):
-        pieces = number / np.sum(weights)
-        if require_ints:
-            pieces = int(pieces)
+        denominator = np.maximum(np.sum(weights), 1)
+        pieces = number / denominator
         result = np.zeros(len(weights))
         for i, w in enumerate(weights):
             result[i] = pieces * w
+            if require_ints:
+                result[i] = int(result[i])
         return result
 
     def remove_overbookings(self, capacity, confirmed_bookings_seat):
@@ -648,6 +491,8 @@ class Service:
                 # the train is not full, but there is not enough room for everyone who wants to join the train. We need
                 # to select who gets a seat.
                 number_overbooked = np.sum(on_station) - capacity - current_occupancy[i]
+                # if people want to get the train but can't, they loose confidence in the service.
+                self.passenger_confidence = np.maximum(self.passenger_confidence - (number_overbooked * 0.001), 0)
                 people_to_remove = self.split_to_list(number_overbooked, on_station, require_ints=True)
                 confirmed_bookings_seat[i] -= people_to_remove
                 join_1 = current_occupancy[:i - 1]
@@ -656,7 +501,6 @@ class Service:
                 for j in range(0, len(on_station)):
                     # the predicted occupancy needs to decrease as people get off at their stops.
                     current_occupancy[i + j] -= on_station[j]
-        print(f"{current_occupancy}, {np.sum(current_occupancy)}")
         return confirmed_bookings_seat
 
     def do_promotion(self, p):
@@ -697,14 +541,15 @@ class Service:
         than X train lines are created.
         todo: * incorporate promotions [done 28 Feb]
               * incorporate economic partner bonus
-              * different traffic for weekends
-              * factor in reputation
+              * different traffic for weekends [done 7 mar]
+              * factor in reputation [done 6 mar, needs testing]
               * report back the passenger numbers / statistics
         :param time: The time the service leaves the first station
         :param dow: The day of the week
         :param reputation: The reputation of Tranz-Passenger
         :return: list of Passenger objects
         """
+        rep_score = reputation * self.passenger_confidence
         night_start = [20, 21, 22, 23, 0]
         night_end = [1, 2, 3, 4, 5, 6]
         last_station = len(self.stations) - 1
@@ -728,14 +573,17 @@ class Service:
             destination_pop[i] = town.population
             if i != 0:
                 destination_ttimes[i] = self.get_journey_length(i-1, i).total_seconds()
-        confirmed_bookings_seat = [None] * len(self.stations)
-        confirmed_bookings_sleep = [None] * len(self.stations)
+        confirmed_bookings_seat = [None] * (len(self.stations) - 1)
+        confirmed_bookings_sleep = [None] * (len(self.stations) - 1)
         passengers_before_promotion = 0
         have_a_target_promotion = False
         potential_retain_rate = 1
         overall_potential_increase_promotion = 0
         for i, town in enumerate(self.stations):
-            potential_passengers = town.get_want_to_travels(time.date(), time.time())/town.number_of_directions()
+            if i == len(self.stations) -1:
+                break  # no need to generate onward destinations if we are at the last station
+            potential_passengers = town.get_want_to_travels(time.date(), time.time(), rep_score=rep_score, dow=dow)
+            potential_passengers /= town.number_of_directions()
             """ p[0] is a list of indices for which extra people will be boarding the train due to a promotion,
                 p[2] is the percentage of extra passengers, p[1] is the index they will leave the train"""
             extras_disembarking = []
@@ -778,15 +626,20 @@ class Service:
                     confirmed_bookings_sleep[i][extras_disembarking_index[j] - i - 1] += sleep_disembark
                 else:
                     seat_disembark = extras_disembarking[j]
-                    print(f"disembark_index: {extras_disembarking_index[j]}, i: {i}")
                 confirmed_bookings_seat[i][extras_disembarking_index[j] - i - 1] += seat_disembark
         potential_retain_rate /= len(self.stations)
-        print(f"potential retain rate: {potential_retain_rate}")
         """ Now we need to check that there is space for everyone on the train and that it is not over-booked."""
         capacity_seat = self.car_capacity['passenger car'] * self.config[1]
         capacity_sleep = self.car_capacity['sleeper car'] * self.config[2]
         seat_passengers = self.remove_overbookings(capacity_seat, confirmed_bookings_seat)
         sleep_passengers = self.remove_overbookings(capacity_sleep, confirmed_bookings_sleep)
+        total_seat = 0
+        for station in seat_passengers:
+            total_seat += np.sum(station)
+        if self.stations_reversed:
+            self.number_seat_passengers_all_time_return.append(total_seat)
+        else:
+            self.number_seat_passengers_all_time.append(total_seat)
         """ We need to report additional passengers back to the promotion so the player can gauge how success it was.
             However this is not particularly exact, and should be displayed with an *approximately* clause"""
         if len(self.promotions) > 0:
@@ -804,6 +657,7 @@ class Service:
             else:
                 for p in self.promotions:
                     p.report_back(potential_retain_rate * overall_potential_increase_promotion)
+        self.passenger_confidence = np.minimum(1, self.passenger_confidence + 0.01)
         return seat_passengers, sleep_passengers
 
     def score_passengers(self, seat_p, sleep_p):
@@ -832,10 +686,13 @@ class Service:
                     ticket_revenue += self.get_ticket_price(j - i, sleeper=True) * sleep_p[i][j]
         return ticket_revenue
 
-    def run_these_services(self, services_to_run, day_of_week, score, company_reputation):
+    def run_these_services(self, services_to_run, day_of_week, score, company_reputation, date):
         profit = 0
         returning_services = []
         for service in services_to_run:
+            service = datetime.datetime.combine(date, service.time())
+            if not self.stations_reversed:
+                self.time_service_was_run.append(service)
             seat_passengers, sleep_passengers = self.get_passengers(service, day_of_week, company_reputation)
             score.put_on_buffer(self.score_passengers(seat_passengers, sleep_passengers))
             profit += self.ticket_passengers(seat_passengers, sleep_passengers)
@@ -843,10 +700,12 @@ class Service:
             profit -= self.calculate_cost()
             profit -= self.calculate_tax(profit)
             if self.returns and not self.stations_reversed:
-                returning_services.append(service + self.get_journey_length(0, len(self.stations)-1) + datetime.timedelta(minutes=10))
+                time_of_run = service + self.get_journey_length(0, len(self.stations)-1) + datetime.timedelta(minutes=10)
+                self.time_service_was_run_return.append(time_of_run)
+                returning_services.append(time_of_run)
         if len(returning_services) > 0:
             self.reverse_stations()
-            self.run_these_services(returning_services, day_of_week, score, company_reputation)
+            self.run_these_services(returning_services, day_of_week, score, company_reputation, date)
             self.reverse_stations()
         return profit
 
@@ -858,7 +717,6 @@ class Service:
         :param time: The current time (after increment)
         :return:
         """
-        self.pd.update_reputation(company_reputation)
         if not self.confirmed:
             return "P"  # if the service is unconfirmed, it does not run.
         time_0 = time - increment
@@ -866,6 +724,9 @@ class Service:
         t = time_0
         for p in self.promotions:
             if p.check_expiry(time_1):
+                increase = p.get_lasting_effect()
+                for town in self.stations:
+                    town.increase_percentage_willing(increase, percentage=True)
                 self.promotions.remove(p)
         while t < time_1:
             if self.days[t.weekday()]:  # if this is a day in which the train is scheduled
@@ -882,63 +743,12 @@ class Service:
                                             microseconds=t.time().microsecond)
                     # returns to start of while loop
                 else:
-                    profit = self.run_these_services(self.departure_times[first_departure:], t.weekday(), score, company_reputation)
+                    profit = self.run_these_services(self.departure_times[first_departure:], t.weekday(), score, company_reputation, t.date())
                     if wallet.addsubtract(profit, time.strftime("%d/%m/%y"), details=f"running cost of {self.name}"):
                         score.push_buffer()
                         return "P"
                     else:
                         return f"F You went bankrupt while trying to run the service {self.get_name()}"
-                    for i in range(first_departure, len(self.departure_times)):
-                        ''' Calculating patronage is computationally expensive, so we do it for the first week of the
-                            service running and record the results, then '''
-                        run_instance = self.pd.get_run_instance(False, self.promotions, self.get_stations())
-                        if run_instance == -1:
-                            profit = self.calculate_patronage(self.departure_times[i].time(), t.weekday(), score,
-                                                              time_0.date(), company_reputation)
-                        else:
-                            profit = run_instance[4]
-                            self.log_passenger_numbers(run_instance[:4])
-                            for j, town in enumerate(self.stations):
-                                town.people_arrived(run_instance[1][j] + run_instance[3][j])
-                                town.people_departed(run_instance[0][j] + run_instance[2][j])
-                        profit -= self.calculate_gst(profit)
-                        profit -= self.calculate_cost()
-                        profit -= self.calculate_tax(profit)
-                        self.log_earnings_report(profit, datetime.datetime.combine(time.date(),
-                                                                                          self.departure_times[
-                                                                                              i].time()).strftime("%d-%m-%y %H:%M"))
-                        if wallet.addsubtract(profit, time.strftime("%d/%m/%y"),
-                                              details=f"running cost of {self.name}"):
-                            logger.debug(f"ran service {self.name} at {self.departure_times[i].time()} for ${profit}")
-                        else:
-                            return "F SERVICE COULD NOT RUN BECAUSE YOU COULDN'T AFFORD TO PAY THE STAFF!"
-                        # now we need to do the return trip:
-                        if self.returns:
-                            self.reverse_stations()
-                            return_time = self.departure_times[i]
-                            return_time += self.get_journey_length(0, len(self.stations) - 1)
-                            return_time += datetime.timedelta(minutes=10)
-                            run_instance = self.pd.get_run_instance(True, self.promotions, self.get_stations())
-                            if run_instance == -1:
-                                profit = self.calculate_patronage(return_time.time(), t.weekday(), score,
-                                                                  time_0.date(), company_reputation, is_return=True)
-                            else:
-                                for j, town in enumerate(self.stations):
-                                    town.people_arrived(run_instance[1][j] + run_instance[3][j])
-                                    town.people_departed(run_instance[0][j] + run_instance[2][j])
-                                profit = run_instance[4]
-                                self.log_passenger_numbers(run_instance[:4], is_return=True)
-                            profit -= self.calculate_gst(profit)
-                            profit -= self.calculate_cost()
-                            profit -= self.calculate_tax(profit)
-                            self.log_earnings_report(profit, datetime.datetime.combine(time.date(), return_time.time()).strftime("%d-%m-%y %H:%M"), is_return=True)
-                            if wallet.addsubtract(profit, time.strftime("%d/%m/%y"),
-                                                  details=f"running cost of {self.name}"):
-                                logger.debug(
-                                    f"ran return service {self.name} at {self.departure_times[i].time()} for ${profit}")
-                            else:
-                                return "F SERVICE COULD NOT RUN BECAUSE YOU COULDN'T AFFORD TO PAY THE STAFF!"
-                            self.reverse_stations()  # put them back to normal
                     # done all the runs for today, move on to the next day
                     t += datetime.timedelta(days=1)
                     t -= datetime.timedelta(hours=t.time().hour, minutes=t.time().minute, seconds=t.time().second,
@@ -1002,143 +812,6 @@ class Service:
                     return False  # lose the passenger
         else:  # case 1
             return True
-
-    def calculate_patronage(self, time, dow, score, date, reputation, is_return=False):
-        """
-        Calculates the number of passengers on a particular journey, and returns the total profit from fares.
-        To do this we calculate the number of people who want to travel by train, boost that number depending on
-        rush hour, passenger confidence, etc, calculate where they will get off, calculate their price and decide if
-        they will keep the ticket by comparing that with the price of driving.
-
-        Note, we only calculate patronage for sleeper cars if the train leaves during the night. This is an
-        oversimplification as people working a night shift may want to rent a sleeper room and travel during daytime,
-        but is far simpler then guess-estimating what percentage of passengers are night shift workers.
-
-        :param time: time the service is running
-        :param dow: day of week the service is running
-        :return:
-        """
-        acceptable_commute_time = datetime.timedelta(hours=0.5)
-        # Why does timedelta not work with a time object!?
-        rush_hours = [datetime.datetime.strptime("8", "%H"), datetime.datetime.strptime("17", "%H")]
-        daytime = [datetime.time(7), datetime.time(19)]
-        weekend = [5, 6]
-        # first find out if we are in a rush hour
-        in_rush_hour = False
-        if dow not in weekend:  # no rush hours on a weekend
-            for rh in rush_hours:
-                if rh.time() <= time <= (rh + datetime.timedelta(hours=1)).time():
-                    in_rush_hour = True
-                    break
-        town_pops = np.zeros(len(self.stations))
-        """ The boost_factor is used to increase passenger numbers in cases of rush hours, quick service, or
-            high passenger confidence in the service."""
-        boost_factor = np.ones(len(self.stations))
-        reputation_boost = np.ones(len(self.stations)) * (0.4 * random.random() + 0.2) * reputation
-        boost_factor += reputation_boost
-        ''' The game appears to have a bias to long distance (the Capital Connection should be one of the most
-            popular routes, but it's not) so here I am giving a boost to trips with a total duration less than 3 hrs.'''
-        if self.get_journey_length(0, len(self.stations)-1) < datetime.timedelta(hours=3):
-            boost_factor *= 2.5
-        for i, town in enumerate(self.stations):
-            town_pops[i] = town.population
-            for ep in town.economic_partners:
-                for j in range(len(self.stations)):
-                    if ep is self.stations[j]:
-                        if self.get_journey_length(i, j) <= acceptable_commute_time:
-                            if in_rush_hour:
-                                boost_factor[j] += 0.6
-                            else:
-                                boost_factor[j] += 0.4
-                        else:
-                            if in_rush_hour:
-                                boost_factor[j] += 0.4
-                            else:
-                                boost_factor[j] += 0.2
-        """First we simulate demand by find how many want on, and where they want to get off. They we check that the
-            train has the capacity to carry them and let them on in first on first served basis."""
-        on_seat = np.zeros(len(self.stations))
-        off_seat = np.zeros(len(self.stations))
-        on_sleeper = np.zeros(len(self.stations))
-        off_sleeper = np.zeros(len(self.stations))
-        current_seated_passengers = 0
-        current_sleepers = 0
-        total_fares = 0
-        price_per_station_past_seated = (self.fares[0] / len(self.stations)) + 0.15*self.fares[0]
-        """Give connecting train boost"""
-        if self.has_connection:
-            boost_factor *= 3
-        for i, townpop in enumerate(town_pops):
-            current_seated_passengers -= off_seat[i]
-            # determines how many people are getting on at this station and where they are getting off
-            if i != len(town_pops) - 1:
-                want_to_travel_seated = np.round(self.stations[i].get_want_to_travels(date, time) * boost_factor[i], 0)
-                # If it is nighttime, the demand shifts to sleeper cars
-                if not daytime[0] <= time <= daytime[1]:
-                    want_to_travel_sleeping = np.round((2 / 3) * want_to_travel_seated, 0)
-                    want_to_travel_seated = np.round(want_to_travel_seated / 3, 0)
-                if self.get_seated_capacity() - current_seated_passengers > want_to_travel_seated:
-                    on_seat[i] = want_to_travel_seated
-                    current_seated_passengers += want_to_travel_seated
-                else:
-                    on_seat[i] = self.get_seated_capacity() - current_seated_passengers  # use all available capacity
-                    current_seated_passengers = self.get_seated_capacity()  # train is full
-                if not daytime[0] <= time <= daytime[1] and self.get_sleeper_capacity() - current_sleepers > want_to_travel_sleeping:
-                    on_sleeper[i] = want_to_travel_sleeping
-                    current_sleepers += want_to_travel_sleeping
-                elif not daytime[0] <= time <= daytime[1]:
-                    on_sleeper[i] = self.get_sleeper_capacity() - current_sleepers
-                    current_sleepers = self.get_sleeper_capacity()
-                if not daytime[0] <= time <= daytime[1]:  # calculate destinations for sleepers, if at night
-                    travel_times = np.ones(len(town_pops) - i - 1)
-                    for j in range(i + 1, len(self.stations)):
-                        travel_times[j - i - 1] = self.get_journey_length(i, j).seconds
-                    weight = town_pops[i + 1:] / 100 + travel_times  # longer travel times are good for sleepers because
-                    logger.debug(f"seat weights:{weight}")  # it means they can get more sleep.
-                    destinations_sleeper = random.choices(
-                        np.linspace(i + 1, len(town_pops) - 1, len(town_pops) - 1 - i),
-                        weights=weight, k=int(on_sleeper[i]))
-                    for dest in destinations_sleeper:
-                        train_cost = self.fares[1]
-                        if self.price_sensitivity(train_cost, i, int(dest), True):
-                            score.increase(self.stations[i].getDistanceToNode(self.stations[int(dest)]))
-                            off_sleeper[int(dest)] += 1
-                            total_fares += train_cost
-                        else:
-                            on_sleeper[i] -= 1
-                """ The weights should be a combo of population (more people want to travel to more populus place) and
-                    the travel time. (less people are willing to travel if it takes too long)"""
-                travel_times = np.ones(len(town_pops) - i - 1)
-                for j in range(i + 1, len(self.stations)):
-                    travel_times[j - i - 1] = self.get_journey_length(i, j).seconds
-                weight = town_pops[i + 1:] / 100 + (100 * 3600) / travel_times  # might need tweaking
-                logger.debug(f"seat weights:{weight}")
-                destinations = random.choices(np.linspace(i + 1, len(town_pops) - 1, len(town_pops) - 1 - i),
-                                              weights=weight, k=int(on_seat[i]))
-                for dest in destinations:
-                    # not scaling based on trip length for sleepers because nobody can `take over` their bed the way
-                    # someone can `take over` a seat when someone leaves.
-                    train_cost = np.minimum((int(dest) - i + 1) * price_per_station_past_seated, self.fares[0])
-                    if self.price_sensitivity(train_cost, i, int(dest), False):
-                        score.increase(self.stations[i].getDistanceToNode(self.stations[int(dest)]))
-                        off_seat[int(dest)] += 1
-                        total_fares += train_cost
-                    else:
-                        on_seat[i] -= 1
-        self.log_passenger_numbers([on_seat, off_seat, on_sleeper, off_sleeper], is_return=is_return)
-        self.pd.push_data(on_seat, off_seat, on_sleeper, off_sleeper, total_fares, is_return)
-        # select destination probs from remaining stations with prop proportaional to population
-        # assign passenger numbers on and off at each town
-        # increase passenger numbers by boost factor if going between economic partners
-        """ This is quite a complicated system so I want to have lots of checks!"""
-        do_checks = False
-        if do_checks:
-            assert off_seat[0] == 0  # nobody can get off at the first stop because nobody is on the train yet
-            assert on_seat[len(on_seat) - 1] == 0  # nobody on at the last stop. (Returns run a new instance)
-            assert np.sum(on_seat) == np.sum(off_seat)  # all passengers must leave the train at a station
-            for i in range(len(on_seat)):  # cannot have more passengers than capacity on at any one time
-                assert np.sum(on_seat[:i]) - np.sum(off_seat[:i]) <= self.get_seated_capacity()
-        return total_fares
 
     def calculate_gst(self, amount):
         return amount * 0.15
