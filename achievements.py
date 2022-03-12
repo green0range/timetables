@@ -1,4 +1,15 @@
 import datetime
+import os
+
+def get_objectives():
+    path = os.path.join("assets", "objective")
+    objectives = [0]*4
+    with open(path, "r", encoding='utf-8') as f:
+        objectives[0] = int(f.readline())
+        objectives[1] = int(f.readline())
+        objectives[2] = int(f.readline())
+        objectives[3] = int(f.readline())
+    return objectives
 
 class Conditions:
     """Conditions are required to win the game / pass on to the next section"""
@@ -44,18 +55,10 @@ class Achievements:
                              "Capital Connection": "Run a train between Wellington and Palmerston North",
                              "The far east": "Connect Gisbourne to your network",
                              "North to south": "Connect the most northern and southern towns using only 2 services",
-                             "[na]Picking up steam": "Transport your first 100,000 passengers",
-                             "[na]Express service": "Establish an express train which bypasses at least 5 towns.",
-                             "[na]Remembered Worlds": "Use the Stratford-Okahukura Line",
-                             "[na]Full steam ahead!": "Transport 100,000,000 passengers",
-                             "[na]We ran out of colours!": "Use the entire colour palette",
-                             "[na]Tongariro visitors": "Transport 100 people to National Park Village",
-                             "[na]Ski Ruapehu": "Transport 100 people to Ohakune during winter",
-                             "[na]Fake it till you make it": "Edit a service report",
+                             "Express service": "Establish an express train which bypasses at least 5 towns.",
+                             "Remembered Worlds": "Use the Stratford-Okahukura Line",
+                             "We ran out of colours!": "Use the entire colour palette",
                              "[na]Rapid transit": "Create a service that runs every 15 minutes",
-                             "Promoter": "Run your first advertising campaign",
-                             "[na]Marketing guru": "Run an ad campaign that brings in more money than you spend on it",
-                             "Information": "[na] means `not attainable` because it isn't full programmed yet!"
                              }
         self.completed_achievements = []
         self.east_coast = ["Christchurch", "Invercargill", "Edendale", "Gore", "Balclutha", "Milton", "Mosgiel",
@@ -64,6 +67,7 @@ class Achievements:
                       "Kaikōura", "Blenheim", "Picton", "Seddon"]
         self.west_coast = ["Greymouth", "Moana", "Ōtira", "Westport", "Īnangahue", "Reefton", "Ahaura", "Ikamatua",
                       "Kūmara", "Hokitika"]
+        self.known_services = []
 
     def get_all_achievements(self):
         return self.achievements
@@ -89,6 +93,8 @@ class Achievements:
         :param service: service (or list of) which may have completed a new achievement
         :return: list of newly completed services.
         """
+        if service not in self.known_services:
+            self.known_services.append(service)  # we need a full list for achievements that are context dependent
         new = []
         for key in self.achievements:
             if key in self.completed_achievements:
@@ -183,7 +189,7 @@ class Achievements:
         elif achievement_name == "North to south":
             north_is = False
             south_is = False
-            for s in service:
+            for s in self.known_services:
                 picton = False
                 invers = False
                 wellington = False
@@ -202,5 +208,23 @@ class Achievements:
                 if wellington and hikurangi:
                     north_is = True
             if north_is and south_is:
+                return True
+        elif achievement_name == "Express service":
+            for s in service:
+                stations = s.get_stations()
+                if len(stations) == 2 and len(stations[0].getNodesOnPath(stations[1])) > 5:
+                    return True
+        elif achievement_name == "Remembered Worlds":
+            for s in service:
+                stations = s.get_stations()
+                """ We need all the towns along the line - even the ones where the train doesn't stop."""
+                all_towns = stations[0].getNodesOnPath(stations[len(stations)-1])
+                for town in all_towns:
+                    if town.get_name == "Whangamōmona":
+                        return True
+        elif achievement_name == "We ran out of colours!":
+            if len(self.known_services) > 17:
+                """ All the colours are hard-coded in the style sheet. There are 18, if we run out, it will just use
+                    a default colour (probably white) for the route."""
                 return True
         return False

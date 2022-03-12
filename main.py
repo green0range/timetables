@@ -22,6 +22,10 @@ import webbrowser
 logger = logging.Logger(name="main")
 import sound
 
+mlogger = logging.getLogger('matplotlib')
+mlogger.setLevel(logging.WARNING)
+
+
 def alphabet_sort(item):
     return item.get_name()
 
@@ -173,8 +177,22 @@ class MainWindow(QtWidgets.QMainWindow):
             if key in ach_done:
                 lbl.setText(f"<s><h4>{key}</h4></s>")
             lbl_descript = QtWidgets.QLabel(ach_all[key])
+            lbl_descript.setFont(QtGui.QFont(self.message_font, 10))
             self.gr_left.addWidget(lbl)
             self.gr_left.addWidget(lbl_descript)
+        objectives = achievements.get_objectives()
+        if self.img_map.get_time().year >= 2030:
+            txt_reminder = "<h4>Reminder:<h4> Achievements are nice and all but your compulsory objectives are\n" \
+                           f" 1. <s>Connect {objectives[0]}% of towns by 2030</s>\n 2. Connect {objectives[1]}% of towns by 2050\n" \
+                           f"3. <s>Transport {objectives[2]}pkm in 2029</s>\n 4. Transport {objectives[3]}pkm in 2049"
+        else:
+            txt_reminder = "<h4>Reminder:<h4> Achievements are nice and all but your compulsory objectives are\n" \
+                            f" 1. Connect {objectives[0]}% of towns by 2030\n 2. Connect {objectives[1]}% of towns by 2050\n" \
+                            f" 3. Transport {objectives[2]}pkm in 2029\n 4. Transport {objectives[3]}pkm in 2049"
+        lbl_reminder = QtWidgets.QLabel(txt_reminder)
+        lbl_reminder.setWordWrap(True)
+        lbl_reminder.setFont(QtGui.QFont(self.message_font, 10))
+        self.gr_left.addWidget(lbl_reminder)
         btn_close = QtWidgets.QPushButton("Close")
         btn_close.clicked.connect(self.close_report)
         self.gr_left.addWidget(btn_close)
@@ -189,6 +207,11 @@ class MainWindow(QtWidgets.QMainWindow):
         :param: rb3: the radio button that indicates if slot 3 is selected.
         :return: None
         """
+        # this locks the size of the left frame, because resizing in a video game looks tacky, and QT likes to
+        # automatically resize things.
+        frm_l_size = self.frm_left.size()
+        self.frm_left.setMaximumSize(frm_l_size)
+        self.frm_left.setMinimumSize(frm_l_size)
         if difficulty == "Unlimited Money":
             self.wallet.money = 99999999999999
         self.btn_bounding_nz.setChecked(True)
@@ -316,6 +339,9 @@ class MainWindow(QtWidgets.QMainWindow):
         lbl_message1.setWordWrap(True)
         lbl_plot = QtWidgets.QLabel("")
         lbl_plot.setPixmap(self.get_emissions_plot())
+        a = intro_txt2.split("*")
+        o = achievements.get_objectives()
+        intro_txt2 = a[0] + str(o[0]) + a[1] + str(o[1]) + a[2] + str(o[2]) + a[3] + str(o[3]) + a[4]
         lbl_message2 = QtWidgets.QLabel(intro_txt2)
         lbl_message2.setFont(QtGui.QFont(self.message_font, 8))
         lbl_message2.setWordWrap(True)
@@ -642,35 +668,38 @@ You can find out more about it at https://timetablesgame.nz"""
                               QtWidgets.QTableWidgetItem(f"{int(numbers[1][i])}/{int(numbers[3][i])}"))
             current_row += 1
 
-    def plot_profit(self, earnings):
-        profit = []
-        date = []
-        if len(earnings) > 20:
-            earnings = earnings[len(earnings)-20:]
-        for p, d in earnings:
-            profit.append(float(p))
-            date.append(datetime.datetime.strptime(d, "%d-%m-%y %H:%M").strftime("%a %d %b %H:%M"))
-        print(profit, date)
-        fig1, ax1 = pyplot.subplots(figsize=(3, 2), dpi=130)
+    def plot_profit(self, profit, date, lims=None):
+        fig1, ax1 = pyplot.subplots(figsize=(3, 4), dpi=130)
         canvas = FigureCanvas(fig1)
         ax1.plot(date, profit)
-        ax1.set_title("Recent Profit / Loss")
-        ax1.set_xlabel("date & time")
+        ax1.set_title("Profit / Loss")
+        ax1.set_xlabel("date")
         ax1.tick_params(rotation=90)
+        ax1.xaxis.set_major_locator(pyplot.MaxNLocator(20))
+        if lims is not None:
+            ax1.set_ylim(lims)
         pyplot.subplots_adjust(bottom=0.5)
-        ax1.set_ylabel("Profit / Loss")
+        ax1.set_ylabel("Profit, $")
         canvas.draw()
         width, height = canvas.get_width_height()
         im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
+        pyplot.close(fig1)
         return QtGui.QPixmap.fromImage(im)
 
-    def plot_ridership(self, seat, sleep, date):
-        fig1, ax1 = pyplot.subplots(figsize=(3, 2), dpi=130)
+    def plot_ridership(self, seat, sleep, date, title='Ridership', lims=None):
+        fig1, ax1 = pyplot.subplots(figsize=(3, 4), dpi=130)
         canvas = FigureCanvas(fig1)
-        ax1.plot(seat)
-        ax1.set_title("Ridership")
+        ax1.plot(date, seat)
+        try:
+            ax1.plot(date, sleep)
+        except:
+            pass
+        ax1.set_title(title)
         ax1.set_xlabel("date")
         ax1.set_ylabel("Number of people")
+        ax1.xaxis.set_major_locator(pyplot.MaxNLocator(20))
+        if lims is not None:
+            ax1.set_ylim(lims)
         ax1.tick_params(rotation=90)
         pyplot.subplots_adjust(bottom=0.5)
         canvas.draw()
@@ -687,10 +716,14 @@ You can find out more about it at https://timetablesgame.nz"""
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
         seat_numbers = service.number_seat_passengers_all_time
-        date = service.time_service_was_run
-        print(seat_numbers)
+        seat_numbers_return = service.number_seat_passengers_all_time_return
+        date = [""]*len(service.time_service_was_run)
+        for i in range(len(date)):
+            date[i] = service.time_service_was_run[i].strftime("%a %d %b '%y")
+        profit = service.profit_all_time
+        profit_return = service.profit_all_time_return
         sleep_numbers = service.number_sleep_passengers_all_time
-        earnings = service.get_earnings_report()
+        sleep_numbers_return = service.number_seat_passengers_all_time_return
         lbl_title = QtWidgets.QLabel(f"Service Report for {service.get_name()}")
         lbl_title.setFont(QtGui.QFont(self.title_font, 16))
         """ Generate some information about the train service."""
@@ -747,8 +780,23 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
         self.gr_left.addWidget(lbl_info, 1, 0, 1, 2)
         lbl_passengers_all_time = QtWidgets.QLabel()
-        lbl_passengers_all_time.setPixmap(self.plot_ridership(seat_numbers, sleep_numbers, date))
+        limit_passenger = (0, service.get_capacity()+10)
+        max_income = service.car_capacity['passenger car'] * service.config[1] * service.fares[0]
+        max_income += service.car_capacity['sleeper car'] * service.config[2] * service.fares[1]
+        max_income -= service.get_running_cost()
+        limit_money = (-1 * service.get_running_cost(), max_income)
+        lbl_passengers_all_time.setPixmap(self.plot_ridership(seat_numbers, sleep_numbers, date, lims=limit_passenger))
         self.gr_left.addWidget(lbl_passengers_all_time, 2, 0)
+        lbl_profit = QtWidgets.QLabel()
+        lbl_profit.setPixmap(self.plot_profit(profit, date, lims=limit_money))
+        self.gr_left.addWidget(lbl_profit, 2, 1)
+        if service.returns:
+            lbl_passengers_all_time_return = QtWidgets.QLabel()
+            lbl_passengers_all_time_return.setPixmap(self.plot_ridership(seat_numbers_return, sleep_numbers_return, date, title="Ridership of returning train", lims=limit_passenger))
+            self.gr_left.addWidget(lbl_passengers_all_time_return, 3, 0)
+            lbl_profit_return = QtWidgets.QLabel()
+            lbl_profit_return.setPixmap(self.plot_profit(profit_return, date, lims=limit_money))
+            self.gr_left.addWidget(lbl_profit_return, 3, 1)
         close = QtWidgets.QPushButton("Close")
         close.clicked.connect(self.close_report)
         self.gr_left.addWidget(close, 10, 0, 1, 2)

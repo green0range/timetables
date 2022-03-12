@@ -14,14 +14,17 @@ logger = logging.getLogger()
 
 class Service:
     def __init__(self, save_manager):
+        self.petrol_price = 1.98
+        self.current_year = 2020
         self.time_service_was_run = []
         self.time_service_was_run_return = []
         self.number_sleep_passengers_all_time_return = []
         self.number_seat_passengers_all_time_return = []
         self.number_seat_passengers_all_time = []
         self.number_sleep_passengers_all_time = []
+        self.profit_all_time = []
+        self.profit_all_time_return = []
         self.distance_between_stations = None
-        self.name = ""
         self.name = ""
         self.save_manager = save_manager
         self.confirmed = False
@@ -305,6 +308,19 @@ class Service:
                 cost += self.running_costs['minor station fees']
         cost += self.running_costs['maintenance']
         return np.round(cost, 2)
+
+    def inflate_petrol_price(self, date):
+        if date.year > self.current_year:
+            self.current_year = date.year
+            self.petrol_price *= 1.03  # 3 % inflation
+            return
+        if date >= datetime.datetime.strptime("24/02/2022", "%d/%m/%Y"):
+            self.petrol_price = 3 + (0.6 * random.random())
+            if random.random() > 0.7:
+                logger.warning("Putin tried to fight a senseless war and oil prices just went up.")
+            elif random.random() > 0.3:
+                logger.warning("Putin committed war crimes and all you care about is the price of petrol!?")
+            return
 
     def get_journey_length(self, station1_index, station2_index):
         """
@@ -699,6 +715,10 @@ class Service:
             profit -= self.calculate_gst(profit)
             profit -= self.calculate_cost()
             profit -= self.calculate_tax(profit)
+            if self.stations_reversed:
+                self.profit_all_time_return.append(profit)
+            else:
+                self.profit_all_time.append(profit)
             if self.returns and not self.stations_reversed:
                 time_of_run = service + self.get_journey_length(0, len(self.stations)-1) + datetime.timedelta(minutes=10)
                 self.time_service_was_run_return.append(time_of_run)
@@ -722,6 +742,7 @@ class Service:
         time_0 = time - increment
         time_1 = time
         t = time_0
+        self.inflate_petrol_price(time_0)
         for p in self.promotions:
             if p.check_expiry(time_1):
                 increase = p.get_lasting_effect()
@@ -764,12 +785,11 @@ class Service:
         """ Estimates the cost of doing the trip by car, so that passengers have a base point to compare prices
             The congestion charge is meant to make trains more competitive near urban centres, it is a bit of
             a one-size-fits-all method."""
-        petrol_price = 1.98  # todo: slowly inflate prices
         km_per_litre = 15
         congestion_charge = 5
         if distance < 20:
-            return (distance / km_per_litre) * petrol_price + congestion_charge
-        return (distance / km_per_litre) * petrol_price
+            return (distance / km_per_litre) * self.petrol_price + congestion_charge
+        return (distance / km_per_litre) * self.petrol_price
 
     def price_sensitivity(self, train_cost, i, j, sleeper):
         """ Now we need to factor in the price, it should broadly implement this:

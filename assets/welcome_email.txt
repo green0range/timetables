@@ -1,24 +1,22 @@
-to: Me
-from: The Climate Change Commission
-subject: Tranz-Passenger
-                        
+(A letter from the Prime Minister arrives!)
+
 Tēnā koe hello!
 
-We have a bit of a problem, too many people are driving internal combustion engine cars for New Zealand / Aotearoa to reach its' climate targets. Of course this is not surprising because we don't actually have a reliable alternative to driving... yet. That's your job. You will be CEO of the new passenger train company Tranz-Passenger. You must create a network of passenger trains that allows major mode-shift to low carbon train transport for intercity routes. Meanwhile Kiwi Rail will be electrifying the rest of the network so the trains' emissions further decrease!
+Congratulations on your new job! As head of our new passenger rail service, you are now responsible for creating a major mode shift away from iNeFFiCiENT, gROsS and dIrTY I.C.E. vehicles!
 
-Here you can see that Transport is our second biggest emitter, something which needs your serious attention!
+I mean, just look at this blasted graph, our society is STUPIDLY car DEPENDENT. Oh, and dairy dependent, but that's not your problem... anyway, fix the cars. Meanwhile, Kiwirail is electrifying the track for you and Huntly's horrible coal monster is being deCOmMISSIONeD
 
 ^
 
-Objectives:
-    1. You must have 70% of towns with railway stations serviced before 2030
-    2. You must have 90% of towns with railway stations serviced before 2050
-    3. You must be transporting 300,000,000pkm/yr by 2030
-    4. You must be transporting 600,000,000pkm/yr by 2050
+So, Ah these are your objectives:
+    1. You must have *% of towns with railway stations serviced before 2030
+    2. You must have *% of towns with railway stations serviced before 2050
+    3. You must be transporting *pkm/yr by 2030
+    4. You must be transporting *pkm/yr by 2050
     
-Any questions? A pkm is a `passenger-kilometre` it means you have transported 1 passenger 1 kilometre (or 2 passengers 500 metres, etc.) Servicing a town means that at least 1 train stops at the town to pickup or drop off passengers, and express train that goes through a town without stopping does not count.
+So a pkm is a `passenger-kilometre` it means you have transported 1 passenger 1 kilometre or 2 passengers 500 metres
 
-You will be given some initial capital to make your first routes, after that you must re-invest the profit you make from fares. Be careful about how you price your fares, you don't want them so expensive that people don't travel and you can't meet your objectives, or so cheap you go bankrupt... Either is a fail condition!
+To service a town, at least one train must STOP in the town to pickup and let off passengers.
 
 Ngā mihi,
-The Climate Change Commission, on behalf of the sitting parliament
+A Prime Minister who cares about climate (I wish I actually existed!)
