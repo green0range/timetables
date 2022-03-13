@@ -38,7 +38,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hint_timer = 0
         self.hint_dict = {"clicked_reports": False,
                           "never_true": False,
-                          "opened_promotions_menu": False}
+                          "opened_promotions_menu": False,
+                          "6pm_ad_time_selected": False,
+                          "confirmed_ad": False}
         self.screen_size = scr_size
         self.music = sound.Music()
         self.showFullScreen()  # the map image size is set based on the startup screen size, so don't resize!
@@ -642,7 +644,6 @@ You can find out more about it at https://timetablesgame.nz"""
         self.update_map_image()
 
     def fill_report_table(self, table, stations, passenger_numbers, earnings):
-        self.hint_dict['clicked_reports'] = True
         col_num = len(passenger_numbers[0][0])
         current_row = 0
         for i, station in enumerate(stations):
@@ -669,7 +670,7 @@ You can find out more about it at https://timetablesgame.nz"""
             current_row += 1
 
     def plot_profit(self, profit, date, lims=None):
-        fig1, ax1 = pyplot.subplots(figsize=(3, 4), dpi=130)
+        fig1, ax1 = pyplot.subplots(figsize=(3, 3.3), dpi=130)
         canvas = FigureCanvas(fig1)
         ax1.plot(date, profit)
         ax1.set_title("Profit / Loss")
@@ -687,7 +688,7 @@ You can find out more about it at https://timetablesgame.nz"""
         return QtGui.QPixmap.fromImage(im)
 
     def plot_ridership(self, seat, sleep, date, title='Ridership', lims=None):
-        fig1, ax1 = pyplot.subplots(figsize=(3, 4), dpi=130)
+        fig1, ax1 = pyplot.subplots(figsize=(3, 3.3), dpi=130)
         canvas = FigureCanvas(fig1)
         ax1.plot(date, seat)
         try:
@@ -709,6 +710,7 @@ You can find out more about it at https://timetablesgame.nz"""
         return QtGui.QPixmap.fromImage(im)
 
     def display_report(self, service):
+        self.hint_dict['clicked_reports'] = True
         self.close_report()
         if self.mode_show_map:
             self.mode_show_map = False
@@ -903,6 +905,9 @@ You can find out more about it at https://timetablesgame.nz"""
         img_lbl.setPixmap(QtGui.QPixmap.fromImage(image))
         lbl_descript.setText(new_descript)
 
+    def _6pm_ad_time_checked(self):
+        self.hint_dict['6pm_ad_time_selected'] = True
+
     def marketing_select_campaign(self, cmb_campaign, grid):
         self.hint_dict['opened_promotions_menu'] = True
         btn_close = QtWidgets.QPushButton("Close")
@@ -963,6 +968,7 @@ You can find out more about it at https://timetablesgame.nz"""
             ck_7am = QtWidgets.QCheckBox("7 am ($70,000)")
             ck_noon = QtWidgets.QCheckBox("Noon ($40,000)")
             ck_6pm = QtWidgets.QCheckBox("6 pm ($140,000)")
+            ck_6pm.clicked.connect(self._6pm_ad_time_checked)
             ck_9pm = QtWidgets.QCheckBox("9 pm ($100,000)")
             grid.addWidget(lbl_when, 3, 0, 1, 2)
             grid.addWidget(ck_7am, 4, 0)
@@ -1069,6 +1075,7 @@ You can find out more about it at https://timetablesgame.nz"""
         grid.addWidget(btn_buy_campaign, 10, 0)
 
     def buy_campaign(self, info):
+        self.hint_dict["confirmed_ad"] = True
         if info['type'] == 'poster':
             selection = info['cmb_poster'].currentText()
             target_town = info['posterData'][selection]['target']

@@ -293,7 +293,22 @@ class Service:
         sum = 0
         for (key, car) in zip(self.up_front_costs, self.config):
             sum += self.up_front_costs[key] * car
-        return sum
+        trains_needed = 1
+        if len(self.departure_times) > 1:
+            """ If there is more than one train per day, we may need multiple train sets to run the route.
+                This checks if any trains have returned and can be reused before buying a new train set."""
+            return_time = [datetime.timedelta()] * len(self.departure_times)
+            length = self.get_journey_length(0, len(self.stations)-1) * 2 + datetime.timedelta(minutes=20)
+            for i in range(len(self.departure_times)):
+                return_time[i] = self.departure_times[i] + length
+            for dep in self.departure_times:
+                number_of_returned_trains = 0
+                for ret in return_time:
+                    if ret <= dep:
+                        number_of_returned_trains += 1
+                if number_of_returned_trains == 0:
+                    trains_needed += 1
+        return sum * trains_needed
 
     def get_running_cost(self):
         num_cars_to_clean = np.sum(self.config[1:])
