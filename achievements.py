@@ -58,9 +58,10 @@ class Achievements:
                              "Express service": "Establish an express train which bypasses at least 5 towns.",
                              "Remembered Worlds": "Use the Stratford-Okahukura Line",
                              "We ran out of colours!": "Use the entire colour palette",
-                             "[na]Rapid transit": "Create a service that runs every 15 minutes",
+                             "Rapid transit": "Create a service that runs every 15 minutes",
+                             "Share with your MP": "Write a lovely letter to your member of parliment explaining why we need more investment in rail. We can't tell if you actually did it or not, so we'll just cross it off and pretend you have. Who am I kidding, this is just a political message pretending to be a (pretty bad) video game anyway."
                              }
-        self.completed_achievements = []
+        self.completed_achievements = ["Share with your MP"]
         self.east_coast = ["Christchurch", "Invercargill", "Edendale", "Gore", "Balclutha", "Milton", "Mosgiel",
                       "Dunedin", "Waikouaiti", "Palmerston", "Ōamaru", "Timaru", "Ashburton", "Rolleston",
                       "Rangiora", "Amberley", "Waipara", "Arthur's Pass Village", "Springfield", "Darfield",

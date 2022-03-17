@@ -151,6 +151,7 @@ class Promotion:
                             if town.get_name() == "Wellington":
                                 stops_in_wlg = True
                     if goes_at_night and stops_in_wlg and stops_in_ack:
+                        self.effective_increase_bounds = [0.05, 0.12]
                         s.register_promotion(self)
                         self.start_date = date
                         len_of_promotion = random.randint(4, 21)
@@ -164,6 +165,7 @@ class Promotion:
                 if len(stations) == 2:
                     if stations[0].get_name() == "Christchurch" or stations[0].get_name() == "Invercargill":
                         if stations[1].get_name() == "Invercargill" or stations[1].get_name() == "Christchruch":
+                            self.effective_increase_bounds = [0.05, 0.12]
                             s.register_promotion(self)
                             self.start_date = date
                             len_of_promotion = random.randint(4, 21)
@@ -173,7 +175,7 @@ class Promotion:
         else:
             if target == "everywhere":
                 self.promotion_type = "promote-service"  # promotes the company, meaning all trains routes are promoted
-                self.effective_increase_bounds = [0, 0.05]  # a random passenger increase is chosen between bounds.
+                self.effective_increase_bounds = [0.01, 0.08]  # a random passenger increase is chosen between bounds.
                 for s in services:
                     s.register_promotion(self)
                 self.start_date = date

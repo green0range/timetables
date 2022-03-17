@@ -58,16 +58,64 @@ class Score:
 
 
 class Wallet:
-    def __init__(self, starting_amount=5e10):
+    def __init__(self, starting_amount=0):
         self.file = None
         self.money = starting_amount
         self.overdraft = 0
         self.overdraft_interest_rate = 0.1
         self.account_records = []
         self.save_manager = None
+        self.finance_info = None
+        self.finance_mode = None
+
+    def check_condition(self, key, score):
+        con = self.finance_info[self.finance_mode][key]["conditions"]
+        if con == "None":
+            return True
+        year, pkm = con.split(">")
+        try:
+            if score.previous_pkms[int(year)-2019] > int(pkm):
+                return True
+        except IndexError:  # the year in the condition may not actually have happened yet
+            pass
+        return False
+
+    def tick(self, date, score, map):
+        if type(date) != str:
+            date = date.strftime("%d/%m/%Y")
+        if self.finance_mode is None:
+            return
+        for key in self.finance_info[self.finance_mode].keys():
+            if "progress_funding" in key:
+                if date in self.finance_info[self.finance_mode][key]["dates"] and self.check_condition(key, score):
+                    amount = float(self.finance_info[self.finance_mode][key]["amount"])
+                    self.addsubtract(amount, date, "Govt. Funding boost")
+                    map.display_new_achievement([f"You got ${amount} of new funding!"], dont_add_preamble=True)
 
     def get_balance(self):
         return np.round(self.money, 2)
+
+    def set_finance_mode(self, mode):
+        self.finance_mode = mode
+        self.money = float(self.finance_info[mode]['start_amount'])
+
+    def get_finance_modes(self):
+        if self.finance_info is None:
+            with open(os.path.join("assets", "finance.json"), "r", encoding="utf-8") as f:
+                self.finance_info = json.load(f)
+        return self.finance_info.keys()
+
+    def get_finance_mode_comment(self, mode):
+        if self.finance_info is None:
+            with open(os.path.join("assets", "finance.json"), "r", encoding="utf-8") as f:
+                self.finance_info = json.load(f)
+        comments = []
+        if "comment" in self.finance_info[mode].keys():
+            comments.append(self.finance_info[mode]["comment"])
+        for key in self.finance_info[mode].keys():
+            if "progress_funding" in key:
+                comments.append(self.finance_info[mode][key]["comment"])
+        return comments
 
     def addsubtract(self, amount, datestr, details="No transaction details recorded"):
         if len(self.account_records) > 20:  # stop using too much memory

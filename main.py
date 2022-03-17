@@ -125,7 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.setInterval(int(self.tick_rate*1000))
         self.timer.setTimerType(QtCore.Qt.CoarseTimer)
         self.timer.timeout.connect(self.tick)
-        self.btn_toggle_speed.clicked.connect(self.img_map.change_speed)
+        self.btn_toggle_speed.clicked.connect(self.change_tick_speed)
         self.btn_bounding_nz.clicked.connect(lambda: self.set_view("nz"))
         self.btn_bounding_n.clicked.connect(lambda: self.set_view("north"))
         self.btn_bounding_s.clicked.connect(lambda: self.set_view("south"))
@@ -137,6 +137,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.company_reputation = 0.5
         self.btn_disable_hint.clicked.connect(self.hints.setDisabled)
         self.fr_hint.setVisible(False)
+
+    def change_tick_speed(self):
+        if self.btn_toggle_speed.isChecked():
+            self.timer.setInterval(int(self.tick_rate*1000/5))
+        else:
+            self.timer.setInterval(int(self.tick_rate*1000))
 
     def set_view(self, id):
         """
@@ -179,6 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if key in ach_done:
                 lbl.setText(f"<s><h4>{key}</h4></s>")
             lbl_descript = QtWidgets.QLabel(ach_all[key])
+            lbl_descript.setWordWrap(True)
             lbl_descript.setFont(QtGui.QFont(self.message_font, 10))
             self.gr_left.addWidget(lbl)
             self.gr_left.addWidget(lbl_descript)
@@ -191,6 +198,7 @@ class MainWindow(QtWidgets.QMainWindow):
             txt_reminder = "<h4>Reminder:<h4> Achievements are nice and all but your compulsory objectives are\n" \
                             f" 1. Connect {objectives[0]}% of towns by 2030\n 2. Connect {objectives[1]}% of towns by 2050\n" \
                             f" 3. Transport {objectives[2]}pkm in 2029\n 4. Transport {objectives[3]}pkm in 2049"
+        txt_reminder += "\n\n Oh, and share with your MP. That's compulsory. Good thing it's already crossed off!"
         lbl_reminder = QtWidgets.QLabel(txt_reminder)
         lbl_reminder.setWordWrap(True)
         lbl_reminder.setFont(QtGui.QFont(self.message_font, 10))
@@ -214,8 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         frm_l_size = self.frm_left.size()
         self.frm_left.setMaximumSize(frm_l_size)
         self.frm_left.setMinimumSize(frm_l_size)
-        if difficulty == "Unlimited Money":
-            self.wallet.money = 99999999999999
+        self.wallet.set_finance_mode(difficulty)
         self.btn_bounding_nz.setChecked(True)
         slot = None
         if rb1.isChecked():
@@ -303,6 +310,24 @@ class MainWindow(QtWidgets.QMainWindow):
         t = QtCore.QTimer()
         t.singleShot(1000, lambda: btn.setText(original_text))
 
+    def add_post_script_funding_model(self, mode=None):
+        txt = "\nP.S.\n"
+        if mode is None:
+            comments = self.wallet.get_finance_mode_comment(list(self.wallet.get_finance_modes())[0])
+        else:
+            comments = self.wallet.get_finance_mode_comment(mode)
+        for comment in comments:
+            txt += comment + "\n"
+        return txt
+
+    def menu_difficulty_changed(self, difficulty, label):
+        with open(os.path.join("assets", "welcome_email.txt"), "r", encoding='utf-8') as f:
+            intro_txt1, intro_txt2 = f.read().split("^")
+        a = intro_txt2.split("*")
+        o = achievements.get_objectives()
+        intro_txt2 = a[0] + str(o[0]) + a[1] + str(o[1]) + a[2] + str(o[2]) + a[3] + str(o[3]) + a[4]
+        intro_txt2 += self.add_post_script_funding_model(difficulty)
+        label.setText(intro_txt2)
 
     def show_menu(self):
         """
@@ -344,11 +369,13 @@ class MainWindow(QtWidgets.QMainWindow):
         a = intro_txt2.split("*")
         o = achievements.get_objectives()
         intro_txt2 = a[0] + str(o[0]) + a[1] + str(o[1]) + a[2] + str(o[2]) + a[3] + str(o[3]) + a[4]
+        intro_txt2 += self.add_post_script_funding_model()
         lbl_message2 = QtWidgets.QLabel(intro_txt2)
         lbl_message2.setFont(QtGui.QFont(self.message_font, 8))
         lbl_message2.setWordWrap(True)
         cmb_difficulty = QtWidgets.QComboBox()
-        cmb_difficulty.addItems(["Normal Difficulty", "Unlimited Money"])
+        cmb_difficulty.addItems(list(self.wallet.get_finance_modes()))
+        cmb_difficulty.currentTextChanged.connect(lambda: self.menu_difficulty_changed(cmb_difficulty.currentText(), lbl_message2))
         btn_begin = QtWidgets.QPushButton("Start Game")
         btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3, cmb_difficulty.currentText()))
         ''' If release, this will go to a highscores webpage, but for now I will use it to get feedback'''
@@ -452,6 +479,7 @@ You can find out more about it at https://timetablesgame.nz"""
         """
         self.music.on_tick()
         if not self.btn_pause.isChecked():
+            self.wallet.tick(self.img_map.get_time(), self.score, self.img_map)
             win = self.img_map.update_time(self.tick_rate)
             """win will be of form [P/W/F] REASON where P = PASS/PROCEED (do nothing), W = WIN, F = FAIL
                 There is also the code C = CAUTION, used when the player is unable to afford a new service."""
@@ -687,6 +715,29 @@ You can find out more about it at https://timetablesgame.nz"""
         pyplot.close(fig1)
         return QtGui.QPixmap.fromImage(im)
 
+    def plot_destinations(self, dest_names, arrivals, departures, title="Popularity of train stations"):
+        total_arrivals = np.sum(arrivals)
+        total_departures = np.sum(departures)
+        if total_arrivals != 0:
+            arrivals = 100 * np.array(arrivals) / total_arrivals  # make percentage
+        if total_departures != 0:
+            departures = 100 * np.array(departures) / total_departures
+        fig1, ax1 = pyplot.subplots(figsize=(3, 2), dpi=130)
+        canvas = FigureCanvas(fig1)
+        x = np.linspace(0, len(dest_names), len(dest_names))
+        ax1.bar(x - 0.2, arrivals, 0.4, label="arrivals at", color='#ff5252')
+        ax1.bar(x + 0.2, departures, 0.4, label="departures from", color='#5252ff')
+        ax1.legend()
+        ax1.set_title(title)
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(dest_names)
+        ax1.set_xlabel("Percent of travellers in last 7 days")
+        canvas.draw()
+        width, height = canvas.get_width_height()
+        im = QtGui.QImage(canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
+        pyplot.close(fig1)
+        return QtGui.QPixmap.fromImage(im)
+
     def plot_ridership(self, seat, sleep, date, title='Ridership', lims=None):
         fig1, ax1 = pyplot.subplots(figsize=(3, 3.3), dpi=130)
         canvas = FigureCanvas(fig1)
@@ -791,7 +842,18 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(lbl_passengers_all_time, 2, 0)
         lbl_profit = QtWidgets.QLabel()
         lbl_profit.setPixmap(self.plot_profit(profit, date, lims=limit_money))
+        lbl_dest = QtWidgets.QLabel()
+        dest_names = []
+        for town in service.get_stations():
+            dest_names.append(town.get_name())
+        arrives = np.zeros(len(service.times_visited_destination[0]))
+        departs = np.zeros(len(service.times_visited_destination[0]))
+        for i in range(len(service.times_visited_destination)):
+            arrives += service.times_visited_destination[i]
+            departs += service.times_departed_from_destination[i]
+        lbl_dest.setPixmap(self.plot_destinations(dest_names, arrives, departs))
         self.gr_left.addWidget(lbl_profit, 2, 1)
+        self.gr_left.addWidget(lbl_dest, 4, 0)
         if service.returns:
             lbl_passengers_all_time_return = QtWidgets.QLabel()
             lbl_passengers_all_time_return.setPixmap(self.plot_ridership(seat_numbers_return, sleep_numbers_return, date, title="Ridership of returning train", lims=limit_passenger))
@@ -799,6 +861,18 @@ You can find out more about it at https://timetablesgame.nz"""
             lbl_profit_return = QtWidgets.QLabel()
             lbl_profit_return.setPixmap(self.plot_profit(profit_return, date, lims=limit_money))
             self.gr_left.addWidget(lbl_profit_return, 3, 1)
+            lbl_dest_return = QtWidgets.QLabel()
+            dest_names_return = []
+            for town in service.get_stations():
+                dest_names_return.append(town.get_name())
+            dest_names_return.reverse()
+            arrives = np.zeros(len(service.times_visited_destination_return[0]))
+            departs = np.zeros(len(service.times_visited_destination_return[0]))
+            for i in range(len(service.times_visited_destination_return)):
+                arrives += service.times_visited_destination_return[i]
+                departs += service.times_departed_from_destination_return[i]
+            lbl_dest_return.setPixmap(self.plot_destinations(dest_names_return, arrives, departs, title="Popularity of train stations (return trip)"))
+            self.gr_left.addWidget(lbl_dest_return, 4, 1)
         close = QtWidgets.QPushButton("Close")
         close.clicked.connect(self.close_report)
         self.gr_left.addWidget(close, 10, 0, 1, 2)

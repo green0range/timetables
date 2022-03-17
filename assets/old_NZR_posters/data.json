@@ -12,7 +12,7 @@
     "cost": 2000
   },
   "WaitomoCaves": {
-    "target": "Hangatiki",
+    "target": "\u014ctorohunga",
     "putsPosters": ["Hamilton", "Auckland", "Wellington", "New Plymouth"],
     "putsPostersText": "Hamilton, Auckland, Wellington and New Plymouth",
     "cost": 4000

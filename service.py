@@ -24,6 +24,10 @@ class Service:
         self.number_sleep_passengers_all_time = []
         self.profit_all_time = []
         self.profit_all_time_return = []
+        self.times_visited_destination = [[], [], [], [], [], [], []]
+        self.times_visited_destination_return = [[], [], [], [], [], [], []]
+        self.times_departed_from_destination = [[], [], [], [], [], [], []]
+        self.times_departed_from_destination_return = [[], [], [], [], [], [], []]
         self.distance_between_stations = None
         self.name = ""
         self.save_manager = save_manager
@@ -402,6 +406,11 @@ class Service:
         if not wallet.addsubtract(-self.get_up_front_cost(), date, details=f"Setup costs of {name}"):
             return "C NOT ENOUGH MONEY"
         else:
+            for i in range(len(self.times_visited_destination)):
+                self.times_visited_destination[i] = np.zeros(len(self.stations))
+                self.times_visited_destination_return[i] = np.zeros(len(self.stations))
+                self.times_departed_from_destination[i] = np.zeros(len(self.stations))
+                self.times_departed_from_destination_return[i] = np.zeros(len(self.stations))
             self.editable = False
             self.confirmed = True
             self.name = name
@@ -574,7 +583,7 @@ class Service:
               * incorporate economic partner bonus
               * different traffic for weekends [done 7 mar]
               * factor in reputation [done 6 mar, needs testing]
-              * report back the passenger numbers / statistics
+              * report back the passenger numbers / statistics [done]
         :param time: The time the service leaves the first station
         :param dow: The day of the week
         :param reputation: The reputation of Tranz-Passenger
@@ -611,7 +620,7 @@ class Service:
         potential_retain_rate = 1
         overall_potential_increase_promotion = 0
         for i, town in enumerate(self.stations):
-            if i == len(self.stations) -1:
+            if i == len(self.stations) - 1:
                 break  # no need to generate onward destinations if we are at the last station
             potential_passengers = town.get_want_to_travels(time.date(), time.time(), rep_score=rep_score, dow=dow)
             potential_passengers /= town.number_of_directions()
@@ -628,7 +637,10 @@ class Service:
                     have_a_target_promotion = True
                     increase_from_promotions = np.round(p[2] * potential_passengers)
                     extras_disembarking.append(increase_from_promotions)
-                    extras_disembarking_index.append(p[1])
+                    if self.stations_reversed:
+                        extras_disembarking_index.append(len(self.stations) - p[1] - 1)
+                    else:
+                        extras_disembarking_index.append(p[1])
             destination_weights = destination_pop[i+1:] + 1/(destination_ttimes[i+1:] - (np.ones(len(self.stations) - i - 1) * sum(destination_ttimes[:i])))
             if night_train:
                 potential_sleep = np.round((2 / 3) * potential_passengers, 0)
@@ -657,16 +669,29 @@ class Service:
                     confirmed_bookings_sleep[i][extras_disembarking_index[j] - i - 1] += sleep_disembark
                 else:
                     seat_disembark = extras_disembarking[j]
-                confirmed_bookings_seat[i][extras_disembarking_index[j] - i - 1] += seat_disembark
+                print(f"extras_disembarking_index: {extras_disembarking_index}, i: {i}, stations_reversed: {self.stations_reversed}")
+                if extras_disembarking_index[j] <= i:
+                    pass  # we have gone past, or are at the station
+                else:
+                    confirmed_bookings_seat[i][extras_disembarking_index[j] - i - 1] += seat_disembark
         potential_retain_rate /= len(self.stations)
         """ Now we need to check that there is space for everyone on the train and that it is not over-booked."""
         capacity_seat = self.car_capacity['passenger car'] * self.config[1]
         capacity_sleep = self.car_capacity['sleeper car'] * self.config[2]
         seat_passengers = self.remove_overbookings(capacity_seat, confirmed_bookings_seat)
         sleep_passengers = self.remove_overbookings(capacity_sleep, confirmed_bookings_sleep)
+        """ todo: record the destinations of the passengers for statistics."""
         total_seat = 0
-        for station in seat_passengers:
+        for i, station in enumerate(seat_passengers):
             total_seat += np.sum(station)
+            if self.stations_reversed:
+                self.times_departed_from_destination_return[dow][i] += np.sum(station)
+                for j, dest_town in enumerate(station):
+                    self.times_visited_destination_return[dow][i + j + 1] += dest_town
+            else:
+                self.times_departed_from_destination[dow][i] += np.sum(station)
+                for j, dest_town in enumerate(station):
+                    self.times_visited_destination[dow][i + j + 1] += dest_town
         if self.stations_reversed:
             self.number_seat_passengers_all_time_return.append(total_seat)
         else:
@@ -779,6 +804,10 @@ class Service:
                                             microseconds=t.time().microsecond)
                     # returns to start of while loop
                 else:
+                    self.times_departed_from_destination[t.weekday()] = np.zeros(len(self.stations))
+                    self.times_departed_from_destination_return[t.weekday()] = np.zeros(len(self.stations))
+                    self.times_visited_destination[t.weekday()] = np.zeros(len(self.stations))
+                    self.times_visited_destination_return[t.weekday()] = np.zeros(len(self.stations))
                     profit = self.run_these_services(self.departure_times[first_departure:], t.weekday(), score, company_reputation, t.date())
                     if wallet.addsubtract(profit, time.strftime("%d/%m/%y"), details=f"running cost of {self.name}"):
                         score.push_buffer()
