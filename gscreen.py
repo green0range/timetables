@@ -49,9 +49,8 @@ class Score:
         return np.round(self.previous_pkms[index], 0)
 
     def update_time(self, time):
-        if time.year != self.year:
-            assert time.year == self.year + 1  # the year must not increase by more than 1 at a time
-            self.year = time.year
+        if (time.month == 12 and time.day == 31) or time.year != self.year:
+            self.year += 1
             if self.current_pkm >= self.goals[self.year - 2020]:
                 self.goals_achieved[self.year - 2020] = True
             else:

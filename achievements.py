@@ -15,7 +15,7 @@ class Conditions:
     """Conditions are required to win the game / pass on to the next section"""
 
     def __init__(self):
-        pass
+        self.percent_2030, self.percent_2050, self.pkm_2030, self.pkm_2050 = get_objectives()
 
     def do_checks(self, date, percent_connected, score):
         if date.year == 2030:
@@ -23,23 +23,29 @@ class Conditions:
         elif date.year == 2050:
             return self.check_2050(date, percent_connected, score)
         else:
-            return "P"
+            return self.do_partial_check(percent_connected, score)
+
+    def do_partial_check(self, pc, s):
+        if pc > self.percent_2050 and s.get_lastyear_score() > self.pkm_2050:
+            return "Y"
+        return "P"
 
     def check_2030(self, date, percent_connected, score):
-        if percent_connected >= 70:
-            if score.get_lastyear_score() >= 300000000:
+        if percent_connected >= self.percent_2030:
+            if score.get_lastyear_score() >= self.pkm_2030:
                 return "P"
             else:
-                return "F TRANSPORTED LESS THAN 300,000,000pkm/yr BY 2030"
-        return "F LESS THAN 70% OF TOWNS CONNECTED BY 2030"
+                return f"F TRANSPORTED LESS THAN {self.pkm_2030}pkm/yr BY 2030"
+        return f"F LESS THAN {self.percent_2030}% OF TOWNS CONNECTED BY 2030"
 
     def check_2050(self, date, percent_connected, score):
-        if percent_connected >= 90:
-            if score.get_lastyear_score() >= 600000000:
+        print(score.previous_pkms)
+        if percent_connected >= self.percent_2050:
+            if score.get_lastyear_score() >= self.pkm_2050:
                 return "W"
             else:
-                return "F TRANSPORTED LESS THAN 600,000,000pkm/yr BY 2050"
-        return "F LESS THAN 90% OF TOWNS CONNECTED BY 2050"
+                return f"F TRANSPORTED LESS THAN {self.pkm_2030}pkm/yr BY 2050"
+        return f"F LESS THAN {self.percent_2030}% OF TOWNS CONNECTED BY 2050"
 
 
 class Achievements:

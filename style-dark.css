@@ -2,75 +2,75 @@ QFrame {
     border: 0px solid black;
     border-radius: 4px;
     padding: 0px;
-    background-color: #FFFFFF;
+    background-color: #414141;
 }
 
 QPushButton::disabled {
-    border: 1px solid #BBBBBB;
+    border: 1px solid #EEEEEE;
     border-radius: 1px;
     padding: 2px;
-    background-color: #DFDFDF;
+    background-color: #334756;
     color: #B2B2B2;
 }
 
 QComboBox {
-    color: black;
-    background-color: white;
+    color: white;
+    background-color: #525252;
 }
 
 QCheckBox {
-    color: black;
-    background-color: white;
+    color: white;
+    background-color: #525252;
 }
 
 QRadioButton{
-	color: black;
-	background-color: white;
+	color: white;
+	background-color: #414141;
 }
 
 QPushButton {
-	background-color: white;
-	color: black;
+	background-color: #525252;
+	color: white;
 }
 
 QPushButton#btn_exit {
-    border: 1px solid #BBBBBB;
+    border: 1px solid #EEEEEE;
     border-radius: 1px;
     padding: 2px;
-    background-color: #DA958F;
-    color: black;
+    background-color: #CA3E47;
+    color: white;
 }
 
 QPushButton::checked {
-    border: 1px solid #BBBBBB;
+    border: 1px solid #EEEEEE;
     border-radius: 1px;
     padding: 2px;
-    background-color: #95DA8F;
-    color: black;
+    background-color: #1E5128;
+    color: white;
 }
 
 QPushButton::unchecked {
-    border: 1px solid #BBBBBB;
+    border: 1px solid #EEEEEE;
     border-radius: 1px;
     padding: 2px;
-    background-color: #F8F8F8;
-    color: black;
+    background-color: #525252;
+    color: white;
 }
 
 QPushButton::pressed {
-    border: 1px solid #BBBBBB;
+    border: 1px solid #EEEEEE;
     border-radius: 1px;
     padding: 2px;
-    background-color: #DFDFDF;
-    color: black;
+    background-color: #313131;
+    color: white;
 }
 
 QLabel {
     border: 0px solid black;
     border-radius: 4px;
     padding: 0px;
-    background-color: #FFFFFF;
-    color: #000000;
+    background-color: #414141;
+    color: #FFFFFF;
 }
 
 QFrame#frm_service_panel0 {

@@ -837,7 +837,13 @@ class Service:
                     self.times_departed_from_destination_return[t.weekday()] = np.zeros(len(self.stations))
                     self.times_visited_destination[t.weekday()] = np.zeros(len(self.stations))
                     self.times_visited_destination_return[t.weekday()] = np.zeros(len(self.stations))
-                    profit = self.run_these_services(self.departure_times[first_departure:], t.weekday(), score, company_reputation, t.date())
+                    try:
+                        profit = self.run_these_services(self.departure_times[first_departure:], t.weekday(), score, company_reputation, t.date())
+                    except Exception as e:
+                        print("There was an error, maybe the train DERAILED! That's right, this bug is a feature. Trains can derail now!")
+                        print("If you're the person meant to fix the derailment, it was caused by the following:")
+                        print(e)
+                        profit = 0
                     if wallet.addsubtract(profit, time.strftime("%d/%m/%y"), details=f"running cost of {self.name}"):
                         score.push_buffer()
                         return "P"

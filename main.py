@@ -137,6 +137,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.company_reputation = 0.5
         self.btn_disable_hint.clicked.connect(self.hints.setDisabled)
         self.fr_hint.setVisible(False)
+        self.shown_partial_win = False
 
     def change_tick_speed(self):
         if self.btn_toggle_speed.isChecked():
@@ -180,6 +181,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.map_image is not None:
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
+        row = 0
         for key in ach_all:
             lbl = QtWidgets.QLabel(f"<h4>{key}</h4>")
             if key in ach_done:
@@ -187,8 +189,9 @@ class MainWindow(QtWidgets.QMainWindow):
             lbl_descript = QtWidgets.QLabel(ach_all[key])
             lbl_descript.setWordWrap(True)
             lbl_descript.setFont(QtGui.QFont(self.message_font, 10))
-            self.gr_left.addWidget(lbl)
-            self.gr_left.addWidget(lbl_descript)
+            self.gr_left.addWidget(lbl, row, 0)
+            self.gr_left.addWidget(lbl_descript, row + 1, 0)
+            row += 2
         objectives = achievements.get_objectives()
         if self.img_map.get_time().year >= 2030:
             txt_reminder = "<h4>Reminder:<h4> Achievements are nice and all but your compulsory objectives are\n" \
@@ -202,10 +205,10 @@ class MainWindow(QtWidgets.QMainWindow):
         lbl_reminder = QtWidgets.QLabel(txt_reminder)
         lbl_reminder.setWordWrap(True)
         lbl_reminder.setFont(QtGui.QFont(self.message_font, 10))
-        self.gr_left.addWidget(lbl_reminder)
+        self.gr_left.addWidget(lbl_reminder, row, 0)
         btn_close = QtWidgets.QPushButton("Close")
         btn_close.clicked.connect(self.close_report)
-        self.gr_left.addWidget(btn_close)
+        self.gr_left.addWidget(btn_close, row + 1, 0)
 
     def start_game(self, rb1, rb2, rb3, difficulty):
         """
@@ -433,11 +436,41 @@ You can find out more about it at https://timetablesgame.nz"""
         game_credits = QtWidgets.QLabel(self.get_credits())
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
-        self.gr_left.addWidget(lbl_game_over)
-        self.gr_left.addWidget(lbl)
-        self.gr_left.addWidget(pic)
-        self.gr_left.addWidget(game_credits)
-        self.gr_left.addWidget(btn)
+        self.gr_left.addWidget(lbl_game_over, 0, 0)
+        self.gr_left.addWidget(lbl, 1, 0)
+        self.gr_left.addWidget(pic, 2, 0)
+        self.gr_left.addWidget(game_credits, 3, 0)
+        self.gr_left.addWidget(btn, 4, 0)
+
+    def show_partial_win_screen(self):
+        """
+        This screen is shown if the player achieves all the 2050 goals before 2050
+        :return: None
+        """
+        self.btn_pause.setChecked(True)
+        if self.mode_show_map:
+            self.mode_show_map = False
+            if self.map_image is not None:
+                self.gr_left.removeWidget(self.map_image)
+                self.map_image = None
+        lbl_game_over = QtWidgets.QLabel("SUCCESS!")
+        lbl_game_over.setFont(QtGui.QFont(self.title_font, 20))
+        lbl = QtWidgets.QLabel("You've achieved the 2050 goals before 2050! Ngā mihi nui for building a great rail network!")
+        pic = QtWidgets.QLabel()
+        pix_end_postcard = QtGui.QPixmap()
+        pix_end_postcard.load("assets/endscreen_postcard.png")
+        pic.setPixmap(pix_end_postcard)
+        game_credits = QtWidgets.QLabel(self.get_credits())
+        btn = QtWidgets.QPushButton("Quit Game")
+        btn2 = QtWidgets.QPushButton("Keep playing until 2050")
+        btn.clicked.connect(self.close)
+        btn2.clicked.connect(self.close_report)
+        self.gr_left.addWidget(lbl_game_over, 0, 0)
+        self.gr_left.addWidget(lbl, 1, 0)
+        self.gr_left.addWidget(pic, 2, 0)
+        self.gr_left.addWidget(game_credits, 3, 0)
+        self.gr_left.addWidget(btn, 4, 0)
+        self.gr_left.addWidget(btn2, 5, 0)
 
 
     def get_credits(self):
@@ -468,11 +501,11 @@ You can find out more about it at https://timetablesgame.nz"""
         game_credits = QtWidgets.QLabel(self.get_credits())
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
-        self.gr_left.addWidget(lbl_game_over)
-        self.gr_left.addWidget(lbl)
-        self.gr_left.addWidget(pic)
-        self.gr_left.addWidget(game_credits)
-        self.gr_left.addWidget(btn)
+        self.gr_left.addWidget(lbl_game_over, 0, 0)
+        self.gr_left.addWidget(lbl, 1, 0)
+        self.gr_left.addWidget(pic, 2, 0)
+        self.gr_left.addWidget(game_credits, 3, 0)
+        self.gr_left.addWidget(btn, 4, 0)
 
     def show_caution(self, message):
         """
@@ -508,6 +541,9 @@ You can find out more about it at https://timetablesgame.nz"""
                 self.show_win_screen()
             elif win[0] == "F":
                 self.show_fail_screen(win[2:])
+            elif win[0] == "Y" and not self.shown_partial_win:
+                self.shown_partial_win = True
+                self.show_partial_win_screen()
             if 5 < mood_points <= 7:
                 self.music.change_mood("neutral")
             elif 2 < mood_points <= 5:
