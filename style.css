@@ -18,6 +18,21 @@ QComboBox {
     background-color: white;
 }
 
+QLineEdit {
+	color: black;
+	background-color: white;
+}
+
+QSpinBox {
+	color: black;
+	background-color: white;
+}
+
+QDoubleSpinBox {
+	color: black;
+	background-color: white;
+}
+
 QCheckBox {
     color: black;
     background-color: white;
