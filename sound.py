@@ -28,11 +28,16 @@ class Music:
         self.playing = False
         self.playlist = []
         self.playlist_position = None
+        self.mood_changed = False
 
     def change_mood(self, new_mood):
-        self.mood = new_mood
+        if new_mood != self.mood:
+            self.mood = new_mood
+            self.mood_changed = True
+            print(f"mood changed to {self.mood}")
 
     def make_playlist(self):
+        self.playlist = []
         for key in self.music:
             if key != "enable_music":
                 if self.music[key]["mood"] == self.mood:
@@ -51,7 +56,10 @@ class Music:
             return
         if self.playlist[self.playlist_position].isFinished():
             self.playlist_position += 1
+            if self.mood_changed:
+                self.make_playlist()
             if self.playlist_position >= len(self.playlist):
                 self.playlist_position = 0
+                random.shuffle(self.playlist)
             self.playing = False
             return self.on_tick()

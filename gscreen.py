@@ -26,6 +26,7 @@ class Score:
                       950860170, 1000000000]
         self.goals_achieved = [False] * len(self.goals)
         self.buffer = 0
+        self.mood_points = 10
 
     def increase(self, amount):
         self.current_pkm += amount
@@ -53,8 +54,11 @@ class Score:
             self.year = time.year
             if self.current_pkm >= self.goals[self.year - 2020]:
                 self.goals_achieved[self.year - 2020] = True
+            else:
+                self.mood_points -= 1
             self.previous_pkms.append(self.current_pkm)
             self.current_pkm = 0.0
+        return self.mood_points
 
 
 class Wallet:
@@ -240,6 +244,13 @@ class Map:
         self.previous_time_increment = None
         self.win_conditions = achievements.Conditions()
 
+    def update_size(self, width, height):
+        self.map_image = None
+        self.map_image_needs_update = True
+        self.img = Image.new("RGBA", (width, height), color=(255, 255, 255, 255))
+        self.town_draw_name_complete = False
+        self.redraw()
+
     def skip_year(self):
         new_year = self.game_time.year + 1
         self.previous_time_increment = self.time_increment
@@ -295,6 +306,7 @@ class Map:
         return self.game_time
 
     def change_speed(self, state):
+        """ This is obsolete, speed is now changed by adjusting the timer interval"""
         if state:
             self.time_increment = datetime.timedelta(days=(18250 / (3600 * self.tick_rate)))
         else:
@@ -332,7 +344,7 @@ class Map:
 
 
     def redraw(self):
-        t = self.game_time.strftime("%d/%m/%Y, %H:%M")
+        t = self.game_time.strftime("%d/%m/%Y")
         money = "${:,}".format(self.wallet.get_balance())
         score = "{:,} pkm this year, {:,} pkm last year".format(self.score.get_score(), self.score.get_lastyear_score())
         percent_connected = "{:.1f} % towns serviced".format(self.percent_connected)
@@ -408,7 +420,6 @@ class Map:
             self.about_to_skip_year = False
             self.time_increment = self.previous_time_increment
         self.redraw()
-        self.score.update_time(self.game_time)
         if self.achievement_display_counter > 0:
             self.achievement_display_counter -= 1
         return self.win_conditions.do_checks(self.game_time, self.percent_connected, self.score)

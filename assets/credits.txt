@@ -1,0 +1,13 @@
+**For full credits see `acknowledgements.md`**
+
+Design and programming: William Satterthwaite
+
+Software & Libraries: Python, QT, Numpy, Matplotlib, Pillow
+
+Data: LINZ, Statistics NZ
+
+Images: William, National Library NZ, Archive NZ
+
+Music: Jason Shaw
+
+Thanks for playing, come again soon!

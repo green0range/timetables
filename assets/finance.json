@@ -1,0 +1,40 @@
+{
+	"Normal Difficulty":{
+		"start_amount": 62500000,
+		"comment": "Your intial funding is $62,000,000", 
+		"progress_funding":{
+			"amount": 12500000,
+			"dates": ["01/04/2020", "01/07/2020", "01/10/2020", "01/01/2021", "01/04/2021", "01/07/2021", "01/10/2021", "01/01/2022", "01/04/2022", "01/07/2022", "01/10/2022", "01/01/2023", "01/04/2023", "01/07/2023", "01/10/2023"],
+			"conditions": "None",
+			"comment": "On top of your intial funding, you will receieve $12,500,000 every quarter for the first three years."
+		},
+		"progress_funding2": {
+			"amount": 6250000,
+			"dates":["01/01/2024", "01/01/2025", "01/01/2026", "01/01/2027", "01/01/2028", "01/01/2029", "01/01/2030", "01/01/2031", "01/01/2032", "01/01/2033", "01/01/2034", "01/01/2035", "01/01/2036", "01/01/2037", "01/01/2038", "01/01/2039", "01/01/2040", "01/01/2041", "01/01/2042", "01/01/2043", "01/01/2044", "01/01/2045", "01/01/2046", "01/01/2047", "01/01/2048", "01/01/2049"],
+			"conditions": "2023>12800000",
+			"comment": "If your 2023 pkms are greater than 12800000, you will receive and additional $6,250,000 per year thereafter."
+		}
+	},
+	"Hard Difficulty":{
+		"start_amount": 37500000,
+		"comment": "Your intial funding is $37,500,000",
+		"progress_funding": {
+			"amount": 6250000,
+				"dates": ["01/04/2020", "01/07/2020", "01/10/2020", "01/01/2021", "01/04/2021", "01/07/2021", "01/10/2021", "01/01/2022", "01/04/2022", "01/07/2022", "01/10/2022", "01/01/2023", "01/04/2023", "01/07/2023", "01/10/2023"],
+				"conditions": "None",
+				"comment": "On top of your intial funding, you will receieve $6,250,000 every quarter for the first three years. After 3 years you are expected to be making enough profit do be self-supporting, and no more funding will be given"
+		}
+	},
+	"Unlimited Money":{
+		"start_amount": 99999999999999,
+		"comment": "While filling out your initial funding, our accountant got their finger stuck on the '9' button. Somehow this got overlooked in the proof reading stage and now we've just got to roll with it!"
+	}, 
+	"Realistic":{
+		"start_amount": 0.01,
+		"comment": "You don't actually get any funding and you can't do anything."
+		},
+	"Custom":{
+		"start_amount": 3141592653589793,
+		"comment": "Try your own funding model, just edit finance.json! (this messages is sponsored by a *vegan* pie)"
+	}
+}

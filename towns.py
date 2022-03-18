@@ -43,7 +43,6 @@ class Town:
             self.percentage_willing_to_use_public_transport += increase_amount
         if self.percentage_willing_to_use_public_transport > 0.95:
             self.percentage_willing_to_use_public_transport = 0.95
-        print(f"percent_willing increased to {self.percentage_willing_to_use_public_transport} in {self.name}")
 
     def generate_want_to_travels(self, rep_score, dow):
         """
@@ -73,7 +72,6 @@ class Town:
                 ''' Give a smaller increase so that it is possible to recover.'''
                 self.percentage_willing_to_use_public_transport = np.minimum(
                     self.percentage_willing_to_use_public_transport + 0.005, 0.95)
-            print(f"Percentage willing to use PT: {self.percentage_willing_to_use_public_transport}")
             self.year = self.score.year
             self.population *= 1.02  # 2% population growth
         """0 = Monday, 1 = T, 2 = W, 3 = T, 4 = F, 5 = Saturday, 6 = Sunday"""

@@ -88,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
         pix_sleeper.load("assets/sleeper_thm.png")
         self.lbl_sleeper.setPixmap(pix_sleeper)
         # map image
-        self.img_map = gscreen.Map(int(self.screen_size.width()*0.5), self.screen_size.height(), self.towns, self.wallet, self.score, self.colours)
+        self.img_map = gscreen.Map(int(self.screen_size.width()/2), self.screen_size.height(), self.towns, self.wallet, self.score, self.colours)
         self.update_map_image()
         ''' Services are train services between two towns (with possible intermediate stops). The service Objects holds
             all information about a service, such as what the carriage setup is etc. The service object starts as
@@ -140,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_tick_speed(self):
         if self.btn_toggle_speed.isChecked():
-            self.timer.setInterval(int(self.tick_rate*1000/5))
+            self.timer.setInterval(int(self.tick_rate*1000/8))
         else:
             self.timer.setInterval(int(self.tick_rate*1000))
 
@@ -222,6 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         frm_l_size = self.frm_left.size()
         self.frm_left.setMaximumSize(frm_l_size)
         self.frm_left.setMinimumSize(frm_l_size)
+        self.img_map.update_size(frm_l_size.width()-50, frm_l_size.height())
         self.wallet.set_finance_mode(difficulty)
         self.btn_bounding_nz.setChecked(True)
         slot = None
@@ -425,17 +426,30 @@ You can find out more about it at https://timetablesgame.nz"""
         lbl_game_over = QtWidgets.QLabel("SUCCESS!")
         lbl_game_over.setFont(QtGui.QFont(self.title_font, 20))
         lbl = QtWidgets.QLabel("You won! Ngā mihi nui for building our public transport network!")
+        pic = QtWidgets.QLabel()
+        pix_end_postcard = QtGui.QPixmap()
+        pix_end_postcard.load("assets/endscreen_postcard.png")
+        pic.setPixmap(pix_end_postcard)
+        game_credits = QtWidgets.QLabel(self.get_credits())
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
         self.gr_left.addWidget(lbl_game_over)
         self.gr_left.addWidget(lbl)
+        self.gr_left.addWidget(pic)
+        self.gr_left.addWidget(game_credits)
         self.gr_left.addWidget(btn)
+
+
+    def get_credits(self):
+        with open(os.path.join("assets", "credits.txt"), "r", encoding='utf-8') as f:
+            txt = f.read()
+        return txt
 
     def show_fail_screen(self, message):
         """
         This screen should be shown if the player fails to meet the 2030 or 2050 requirements or if they run go
         bankrupt.
-        :param message: The reason the failed the game - this is shown to the play
+        :param message: The reason they failed the game - this is shown to the play
         :return: None
         """
         self.timer.stop()  # halt game progress
@@ -447,10 +461,17 @@ You can find out more about it at https://timetablesgame.nz"""
         lbl_game_over = QtWidgets.QLabel("GAME OVER!")
         lbl_game_over.setFont(QtGui.QFont(self.title_font, 20))
         lbl = QtWidgets.QLabel(message)
+        pic = QtWidgets.QLabel()
+        pix_end_postcard = QtGui.QPixmap()
+        pix_end_postcard.load("assets/endscreen_postcard_derail.png")
+        pic.setPixmap(pix_end_postcard)
+        game_credits = QtWidgets.QLabel(self.get_credits())
         btn = QtWidgets.QPushButton("Close")
         btn.clicked.connect(self.close)
         self.gr_left.addWidget(lbl_game_over)
         self.gr_left.addWidget(lbl)
+        self.gr_left.addWidget(pic)
+        self.gr_left.addWidget(game_credits)
         self.gr_left.addWidget(btn)
 
     def show_caution(self, message):
@@ -477,16 +498,26 @@ You can find out more about it at https://timetablesgame.nz"""
         occured in the last second (which is 1 day in game-time if not on fast-mode)
         :return:
         """
-        self.music.on_tick()
         if not self.btn_pause.isChecked():
             self.wallet.tick(self.img_map.get_time(), self.score, self.img_map)
             win = self.img_map.update_time(self.tick_rate)
+            mood_points = self.score.update_time(self.img_map.get_time())
             """win will be of form [P/W/F] REASON where P = PASS/PROCEED (do nothing), W = WIN, F = FAIL
                 There is also the code C = CAUTION, used when the player is unable to afford a new service."""
             if win[0] == "W":
                 self.show_win_screen()
             elif win[0] == "F":
                 self.show_fail_screen(win[2:])
+            if 5 < mood_points <= 7:
+                self.music.change_mood("neutral")
+            elif 2 < mood_points <= 5:
+                self.music.change_mood("unhappy")
+            elif mood_points <= 2:
+                self.music.change_mood("dire")
+            elif mood_points > 7 and self.wallet.get_balance() >= 10000:
+                self.music.change_mood("happy")
+            if self.wallet.get_balance() < 10000:
+                self.music.change_mood("dire")
             for service in self.services:
                 response = service.run(self.img_map.get_increment(), self.img_map.get_time(), self.wallet, self.score, self.company_reputation)
                 if response[0] == "F":
@@ -511,6 +542,7 @@ You can find out more about it at https://timetablesgame.nz"""
                 if self.hints.check(self.hint_dict):
                     self.hints.next_hint()
                     self.hint_timer = 0
+        self.music.on_tick()
         self.update_map_image()
 
     def update_map_image(self):
@@ -807,7 +839,7 @@ You can find out more about it at https://timetablesgame.nz"""
                     runs_on_days_text += "and " + day
                     break
                 runs_on_days_text += day + ", "
-        information += f"Train runs on {runs_on_days_text}"
+        information += f"Train runs on {runs_on_days_text}\n"
         information += f"Arrives at {service.stations[len(service.stations)-1].get_name()} after {hours} hrs, {minutes} mins\n"
         stops = ""
         for i, station in enumerate(service.stations):
@@ -837,6 +869,7 @@ You can find out more about it at https://timetablesgame.nz"""
         max_income = service.car_capacity['passenger car'] * service.config[1] * service.fares[0]
         max_income += service.car_capacity['sleeper car'] * service.config[2] * service.fares[1]
         max_income -= service.get_running_cost()
+        max_income *= 0.5  # Since people can buy partial tickets (to intermediate stations), we never get near the maximum
         limit_money = (-1 * service.get_running_cost(), max_income)
         lbl_passengers_all_time.setPixmap(self.plot_ridership(seat_numbers, sleep_numbers, date, lims=limit_passenger))
         self.gr_left.addWidget(lbl_passengers_all_time, 2, 0)

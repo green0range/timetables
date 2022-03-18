@@ -57,7 +57,6 @@ class Service:
         # note: departure_time is datetime object with date 1900-01-01 for compatibility with timedelta.
         # Always ignore date and just use time.
         self.departure_times = []
-        self.departure_times = []
         self.days = [False, False, False, False, False, False, False]
         self.config = [1, 0, 0, 0, 0]
         self.fares = [0, 0]
@@ -333,7 +332,7 @@ class Service:
             self.current_year = date.year
             self.petrol_price *= 1.03  # 3 % inflation
             return
-        if date >= datetime.datetime.strptime("24/02/2022", "%d/%m/%Y"):
+        if self.petrol_price <= 3.0 and date >= datetime.datetime.strptime("24/02/2022", "%d/%m/%Y"):
             self.petrol_price = 3 + (0.6 * random.random())
             if random.random() > 0.7:
                 logger.warning("Putin tried to fight a senseless war and oil prices just went up.")
@@ -596,10 +595,12 @@ class Service:
         night_train = False
         if time.time().hour in night_start or (time + self.get_journey_length(0, last_station)).time().hour in night_end:
             if self.get_journey_length(0, last_station) >= datetime.timedelta(hours=4):
-                night_train = True
+                if self.config[2] > 0:
+                    night_train = True
         '''Above I define a night train to have a journey length greater than 4 hours
            and leave between 10pm and 12am, and arrive between 1am and 6am. All these 
-           requirements must be satisfied for passengers to buy a sleeper ticket.'''
+           requirements must be satisfied for passengers to buy a sleeper ticket.
+           It must also have sleeper carriages. (Obviously)'''
         destination_pop = np.zeros(len(self.stations))
         destination_ttimes = np.zeros(len(self.stations))
         promotion_data = [[]] * len(self.promotions)
@@ -680,30 +681,47 @@ class Service:
         capacity_sleep = self.car_capacity['sleeper car'] * self.config[2]
         seat_passengers = self.remove_overbookings(capacity_seat, confirmed_bookings_seat)
         sleep_passengers = self.remove_overbookings(capacity_sleep, confirmed_bookings_sleep)
-        """ todo: record the destinations of the passengers for statistics."""
+        """ This records the statistics."""
         total_seat = 0
-        for i, station in enumerate(seat_passengers):
-            total_seat += np.sum(station)
-            if self.stations_reversed:
-                self.times_departed_from_destination_return[dow][i] += np.sum(station)
-                for j, dest_town in enumerate(station):
-                    self.times_visited_destination_return[dow][i + j + 1] += dest_town
-            else:
-                self.times_departed_from_destination[dow][i] += np.sum(station)
-                for j, dest_town in enumerate(station):
-                    self.times_visited_destination[dow][i + j + 1] += dest_town
+        total_sleep = 0
+        if seat_passengers[0] is not None:
+            for i, station in enumerate(seat_passengers):
+                total_seat += np.sum(station)
+                if self.stations_reversed:
+                    self.times_departed_from_destination_return[dow][i] += np.sum(station)
+                    for j, dest_town in enumerate(station):
+                        self.times_visited_destination_return[dow][i + j + 1] += dest_town
+                else:
+                    self.times_departed_from_destination[dow][i] += np.sum(station)
+                    for j, dest_town in enumerate(station):
+                        self.times_visited_destination[dow][i + j + 1] += dest_town
+        if night_train:
+            for i, station in enumerate(sleep_passengers):
+                total_sleep += np.sum(station)
+                if self.stations_reversed:
+                    self.times_departed_from_destination_return[dow][i] += np.sum(station)
+                    for j, dest_town in enumerate(station):
+                        self.times_visited_destination_return[dow][i + j + 1] += dest_town
+                else:
+                    self.times_departed_from_destination[dow][i] += np.sum(station)
+                    for j, dest_town in enumerate(station):
+                        self.times_visited_destination[dow][i + j + 1] += dest_town
         if self.stations_reversed:
             self.number_seat_passengers_all_time_return.append(total_seat)
+            self.number_sleep_passengers_all_time_return.append(total_sleep)
         else:
             self.number_seat_passengers_all_time.append(total_seat)
+            self.number_sleep_passengers_all_time.append(total_sleep)
         """ We need to report additional passengers back to the promotion so the player can gauge how success it was.
             However this is not particularly exact, and should be displayed with an *approximately* clause"""
         if len(self.promotions) > 0:
             if have_a_target_promotion:
                 passengers_after_promotion = 0
-                for i in range(len(seat_passengers)):
-                    passengers_after_promotion += np.sum(seat_passengers[i])
-                    if night_train:
+                if seat_passengers[0] is not None:
+                    for i in range(len(seat_passengers)):
+                        passengers_after_promotion += np.sum(seat_passengers[i])
+                if night_train:
+                    for i in range(len(sleep_passengers)):
                         passengers_after_promotion += np.sum(sleep_passengers[i])
                 promotion_passenger_total = passengers_after_promotion - passengers_before_promotion
                 if promotion_passenger_total < 0:
@@ -727,7 +745,7 @@ class Service:
         for i in range(len(seat_p)):
             distances = self.distance_between_stations[i:]
             for j in range(len(seat_p[i])):
-                d = np.sum(distances[:j])
+                d = np.sum(distances[:j + 1])
                 score += d * seat_p[i][j]
                 if sleep_p is not None and sleep_p[i] is not None:
                     score += d * sleep_p[i][j]
@@ -750,8 +768,19 @@ class Service:
             if not self.stations_reversed:
                 self.time_service_was_run.append(service)
             seat_passengers, sleep_passengers = self.get_passengers(service, day_of_week, company_reputation)
-            score.put_on_buffer(self.score_passengers(seat_passengers, sleep_passengers))
-            profit += self.ticket_passengers(seat_passengers, sleep_passengers)
+            """ These methods assume there are some seat passengers and will crash if seat passengers is None, however,
+                we can have a case where there are only sleep passengers, so, generate some zeros."""
+            skip = False
+            if seat_passengers is None or seat_passengers[0] is None:
+                if sleep_passengers is not None and sleep_passengers[0] is not None:
+                    seat_passengers = []
+                    for i in range(len(sleep_passengers)):
+                        seat_passengers.append(np.zeros(len(sleep_passengers[i])))
+                else:
+                    skip = True
+            if not skip:
+                score.put_on_buffer(self.score_passengers(seat_passengers, sleep_passengers))
+                profit += self.ticket_passengers(seat_passengers, sleep_passengers)
             profit -= self.calculate_gst(profit)
             profit -= self.calculate_cost()
             profit -= self.calculate_tax(profit)

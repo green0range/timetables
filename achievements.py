@@ -221,11 +221,16 @@ class Achievements:
                 """ We need all the towns along the line - even the ones where the train doesn't stop."""
                 all_towns = stations[0].getNodesOnPath(stations[len(stations)-1])
                 for town in all_towns:
-                    if town.get_name == "Whangamōmona":
+                    if town.get_name() == "Whangamōmona":
                         return True
         elif achievement_name == "We ran out of colours!":
             if len(self.known_services) > 17:
                 """ All the colours are hard-coded in the style sheet. There are 18, if we run out, it will just use
                     a default colour (probably white) for the route."""
                 return True
+        elif achievement_name == "Rapid transit":
+            for s in service:
+                if len(s.departure_times) >= 2:
+                    if s.departure_times[1] - s.departure_times[2] <= datetime.timedelta(minutes=15):
+                        return True
         return False

@@ -60,7 +60,6 @@ class HintManager:
         self.hint_params.reverse()
         next_h = None
         for i, hint in enumerate(self.hint_params):
-            print(hint)
             h = Hint(hint[0], hint[1], hint[2])
             if i == len(self.hint_params)-1:
                 self.current_hint = h
