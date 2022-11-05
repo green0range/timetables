@@ -1,14 +1,14 @@
 import os
 import random
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
 from PyQt5 import uic
 import numpy as np
 import datetime
 import json
 from matplotlib import pyplot
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
+import sound
 import achievements
 import gscreen
 import promotions
@@ -19,8 +19,8 @@ import hints
 import logging
 import clipboard
 import webbrowser
+
 logger = logging.Logger(name="main")
-import sound
 
 mlogger = logging.getLogger('matplotlib')
 mlogger.setLevel(logging.WARNING)
@@ -56,7 +56,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_image = None
         self.hints = hints.HintManager()
         ''' get some fonts'''
-        font_id1 = QtGui.QFontDatabase.addApplicationFont(os.path.abspath(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf')))
+        font_id1 = QtGui.QFontDatabase.addApplicationFont(
+            os.path.abspath(os.path.join('assets', 'fonts', 'Arvo-Bold.ttf')))
         font_id2 = QtGui.QFontDatabase.addApplicationFont(
             os.path.abspath(os.path.join('assets', 'fonts', 'RobotoMono-VariableFont_wght.ttf')))
         self.title_font = QtGui.QFontDatabase.applicationFontFamilies(font_id1)[0]
@@ -88,7 +89,8 @@ class MainWindow(QtWidgets.QMainWindow):
         pix_sleeper.load("assets/sleeper_thm.png")
         self.lbl_sleeper.setPixmap(pix_sleeper)
         # map image
-        self.img_map = gscreen.Map(int(self.screen_size.width()/2), self.screen_size.height(), self.towns, self.wallet, self.score, self.colours)
+        self.img_map = gscreen.Map(int(self.screen_size.width() / 2), self.screen_size.height(), self.towns,
+                                   self.wallet, self.score, self.colours)
         self.update_map_image()
         ''' Services are train services between two towns (with possible intermediate stops). The service Objects holds
             all information about a service, such as what the carriage setup is etc. The service object starts as
@@ -115,14 +117,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sb_engines.valueChanged.connect(self.update_unconfirmed_service)
         self.sb_passenger_car.valueChanged.connect(self.update_unconfirmed_service)
         self.sb_sleeper_car.valueChanged.connect(self.update_unconfirmed_service)
-        #self.sb_open_air.valueChanged.connect(self.update_unconfirmed_service)
-        #self.sb_baggage.valueChanged.connect(self.update_unconfirmed_service)
+        # self.sb_open_air.valueChanged.connect(self.update_unconfirmed_service)
+        # self.sb_baggage.valueChanged.connect(self.update_unconfirmed_service)
         self.dsb_sleeper_fare.valueChanged.connect(self.update_unconfirmed_service)
         self.dsb_seat_fare.valueChanged.connect(self.update_unconfirmed_service)
         self.btn_confirm.clicked.connect(self.click_confirm_new_route)
         self.timer = QtCore.QTimer()
         self.tick_rate = 1  # number of updates every second
-        self.timer.setInterval(int(self.tick_rate*1000))
+        self.timer.setInterval(int(self.tick_rate * 1000))
         self.timer.setTimerType(QtCore.Qt.CoarseTimer)
         self.timer.timeout.connect(self.tick)
         self.btn_toggle_speed.clicked.connect(self.change_tick_speed)
@@ -141,9 +143,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_tick_speed(self):
         if self.btn_toggle_speed.isChecked():
-            self.timer.setInterval(int(self.tick_rate*1000/8))
+            self.timer.setInterval(int(self.tick_rate * 1000 / 8))
         else:
-            self.timer.setInterval(int(self.tick_rate*1000))
+            self.timer.setInterval(int(self.tick_rate * 1000))
 
     def set_view(self, id):
         """
@@ -174,7 +176,7 @@ class MainWindow(QtWidgets.QMainWindow):
         :return: None
         """
         ach_all = self.achievements.get_all_achievements()
-        ach_done = self.achievements.get_completed_achievements(self.services[:len(self.services)-1])
+        ach_done = self.achievements.get_completed_achievements(self.services[:len(self.services) - 1])
         self.close_report()
         if self.mode_show_map:
             self.mode_show_map = False
@@ -199,8 +201,8 @@ class MainWindow(QtWidgets.QMainWindow):
                            f"3. <s>Transport {objectives[2]}pkm in 2029</s>\n 4. Transport {objectives[3]}pkm in 2049"
         else:
             txt_reminder = "<h4>Reminder:<h4> Achievements are nice and all but your compulsory objectives are\n" \
-                            f" 1. Connect {objectives[0]}% of towns by 2030\n 2. Connect {objectives[1]}% of towns by 2050\n" \
-                            f" 3. Transport {objectives[2]}pkm in 2029\n 4. Transport {objectives[3]}pkm in 2049"
+                           f" 1. Connect {objectives[0]}% of towns by 2030\n 2. Connect {objectives[1]}% of towns by 2050\n" \
+                           f" 3. Transport {objectives[2]}pkm in 2029\n 4. Transport {objectives[3]}pkm in 2049"
         txt_reminder += "\n\n Oh, and share with your MP. That's compulsory. Good thing it's already crossed off!"
         lbl_reminder = QtWidgets.QLabel(txt_reminder)
         lbl_reminder.setWordWrap(True)
@@ -225,7 +227,7 @@ class MainWindow(QtWidgets.QMainWindow):
         frm_l_size = self.frm_left.size()
         self.frm_left.setMaximumSize(frm_l_size)
         self.frm_left.setMinimumSize(frm_l_size)
-        self.img_map.update_size(frm_l_size.width()-50, frm_l_size.height())
+        self.img_map.update_size(frm_l_size.width() - 50, frm_l_size.height())
         self.wallet.set_finance_mode(difficulty)
         self.btn_bounding_nz.setChecked(True)
         slot = None
@@ -241,10 +243,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if load_data is not None:  # returns None if there is no save in the slot
             logger.info("Loading game state from file")
             self.wallet, self.score, self.towns, self.services, self.img_map = load_data
-            self.unconfirmed_service = self.services[len(self.services)-1]
+            self.unconfirmed_service = self.services[len(self.services) - 1]
             self.img_map.load_wallet_score(self.wallet, self.score)
             for i, service in enumerate(self.services):
-                if i == len(self.services)-1:
+                if i == len(self.services) - 1:
                     self.unconfirmed_service = service
                 else:
                     for town in service.stations:
@@ -345,18 +347,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.gr_left.removeWidget(self.map_image)
                 self.map_image = None
         frm_menu = QtWidgets.QFrame()
-        frm_menu.setMinimumSize(int(self.screen_size.width()*0.5) - 50, self.screen_size.height() - 50)
+        frm_menu.setMinimumSize(int(self.screen_size.width() * 0.5) - 50, self.screen_size.height() - 50)
         gr_frm_menu = QtWidgets.QGridLayout(frm_menu)
-        #gr_frm_menu.setAlignment(QtCore.Qt.AlignTop)
+        # gr_frm_menu.setAlignment(QtCore.Qt.AlignTop)
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidget(frm_menu)
         scroll_area.setObjectName("a")
         lbl_title = QtWidgets.QLabel("TIMETABLES! \n(The train scheduling game)")
         lbl_title.setFont(QtGui.QFont(self.title_font, 20))
-        rb_slot1 = QtWidgets.QRadioButton("Slot 1 - "+self.save_manager.get_save_time(1))
+        rb_slot1 = QtWidgets.QRadioButton("Slot 1 - " + self.save_manager.get_save_time(1))
         rb_slot1.setChecked(True)
-        rb_slot2 = QtWidgets.QRadioButton("Slot 2 - "+self.save_manager.get_save_time(2))
-        rb_slot3 = QtWidgets.QRadioButton("Slot 3 - "+self.save_manager.get_save_time(3))
+        rb_slot2 = QtWidgets.QRadioButton("Slot 2 - " + self.save_manager.get_save_time(2))
+        rb_slot3 = QtWidgets.QRadioButton("Slot 3 - " + self.save_manager.get_save_time(3))
         btn_slot1_clear = QtWidgets.QPushButton("Delete Saved Data")
         btn_slot1_clear.clicked.connect(lambda: self.delete_save(1, rb_slot1))
         btn_slot2_clear = QtWidgets.QPushButton("Delete Saved Data")
@@ -379,12 +381,14 @@ class MainWindow(QtWidgets.QMainWindow):
         lbl_message2.setWordWrap(True)
         cmb_difficulty = QtWidgets.QComboBox()
         cmb_difficulty.addItems(list(self.wallet.get_finance_modes()))
-        cmb_difficulty.currentTextChanged.connect(lambda: self.menu_difficulty_changed(cmb_difficulty.currentText(), lbl_message2))
+        cmb_difficulty.currentTextChanged.connect(
+            lambda: self.menu_difficulty_changed(cmb_difficulty.currentText(), lbl_message2))
         btn_begin = QtWidgets.QPushButton("Start Game")
         btn_begin.clicked.connect(lambda: self.start_game(rb_slot1, rb_slot2, rb_slot3, cmb_difficulty.currentText()))
         ''' If release, this will go to a highscores webpage, but for now I will use it to get feedback'''
         btn_highscore = QtWidgets.QPushButton("Send Feedback")
-        btn_highscore.clicked.connect(lambda: webbrowser.open("https://docs.google.com/forms/d/e/1FAIpQLSdnpQeyxYQPsScqqeVxJuE9IL74KrecaWQhIOkMUz5ov5wKCA/viewform?usp=sf_link"))
+        btn_highscore.clicked.connect(lambda: webbrowser.open(
+            "https://docs.google.com/forms/d/e/1FAIpQLSdnpQeyxYQPsScqqeVxJuE9IL74KrecaWQhIOkMUz5ov5wKCA/viewform?usp=sf_link"))
         btn_share = QtWidgets.QPushButton("Share with friend")
         share_text = "Hey friend! I'm playing a game about scheduling trains, you should get it too! https://timetablesgame.nz"
         btn_share.clicked.connect(lambda: self.share(btn_share, share_text, "Share with friend"))
@@ -406,7 +410,7 @@ You can find out more about it at https://timetablesgame.nz"""
         gr_frm_menu.addWidget(rb_slot2, 2, 0)
         gr_frm_menu.addWidget(rb_slot3, 3, 0)
         gr_frm_menu.addWidget(lbl_message1, 4, 0, 1, 2)
-        gr_frm_menu.addWidget(lbl_plot,  5, 0, 1, 2)
+        gr_frm_menu.addWidget(lbl_plot, 5, 0, 1, 2)
         gr_frm_menu.addWidget(lbl_message2, 6, 0, 1, 2)
         gr_frm_menu.addWidget(cmb_difficulty, 7, 0, 1, 2)
         gr_frm_menu.addWidget(btn_begin, 8, 0)
@@ -455,7 +459,8 @@ You can find out more about it at https://timetablesgame.nz"""
                 self.map_image = None
         lbl_game_over = QtWidgets.QLabel("SUCCESS!")
         lbl_game_over.setFont(QtGui.QFont(self.title_font, 20))
-        lbl = QtWidgets.QLabel("You've achieved the 2050 goals before 2050! Ngā mihi nui for building a great rail network!")
+        lbl = QtWidgets.QLabel(
+            "You've achieved the 2050 goals before 2050! Ngā mihi nui for building a great rail network!")
         pic = QtWidgets.QLabel()
         pix_end_postcard = QtGui.QPixmap()
         pix_end_postcard.load("assets/endscreen_postcard.png")
@@ -471,7 +476,6 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(game_credits, 3, 0)
         self.gr_left.addWidget(btn, 4, 0)
         self.gr_left.addWidget(btn2, 5, 0)
-
 
     def get_credits(self):
         with open(os.path.join("assets", "credits.txt"), "r", encoding='utf-8') as f:
@@ -555,7 +559,8 @@ You can find out more about it at https://timetablesgame.nz"""
             if self.wallet.get_balance() < 10000:
                 self.music.change_mood("dire")
             for service in self.services:
-                response = service.run(self.img_map.get_increment(), self.img_map.get_time(), self.wallet, self.score, self.company_reputation)
+                response = service.run(self.img_map.get_increment(), self.img_map.get_time(), self.wallet, self.score,
+                                       self.company_reputation)
                 if response[0] == "F":
                     self.show_fail_screen(response[2:])
             if self.hints.enabled:
@@ -565,7 +570,8 @@ You can find out more about it at https://timetablesgame.nz"""
                 self.hint_dict['timer'] = self.hint_timer
                 self.hint_dict['number_of_services'] = len(self.services) - 1
                 self.hint_dict['departure_time_get_current_time'] = self.departure_time_edit.time().toString("hh:mm")
-                self.hint_dict['saturday_and_sunday_is_checked'] = (self.ckb_sat.isChecked() and self.ckb_sun.isChecked())
+                self.hint_dict['saturday_and_sunday_is_checked'] = (
+                            self.ckb_sat.isChecked() and self.ckb_sun.isChecked())
                 self.hint_dict['num_seat_cars'] = self.sb_passenger_car.value()
                 self.hint_dict['seat_price'] = self.dsb_seat_fare.value()
                 self.hint_dict['btn_north_island_is_checked'] = self.btn_bounding_n.isChecked()
@@ -630,8 +636,10 @@ You can find out more about it at https://timetablesgame.nz"""
         self.txt_service_name.setPlaceholderText(self.unconfirmed_service.create_name())
 
     def update_service_dependant_widgets(self):
-        self.lbl_feedback_1.setText(f"This train will be able to carry a maximum of {self.unconfirmed_service.get_capacity()} passengers, cost ${self.unconfirmed_service.get_up_front_cost()} to build and ${self.unconfirmed_service.get_running_cost()}/journey to run")
-        self.lbl_feedback_2.setText(f"Expected Revenue per journey at 70% full is ${np.round(self.unconfirmed_service.get_estimated_revenue(),2)}, giving an expected profit of ${np.round(self.unconfirmed_service.get_estimated_profit(),2)} before tax")
+        self.lbl_feedback_1.setText(
+            f"This train will be able to carry a maximum of {self.unconfirmed_service.get_capacity()} passengers, cost ${self.unconfirmed_service.get_up_front_cost()} to build and ${self.unconfirmed_service.get_running_cost()}/journey to run")
+        self.lbl_feedback_2.setText(
+            f"Expected Revenue per journey at 70% full is ${np.round(self.unconfirmed_service.get_estimated_revenue(), 2)}, giving an expected profit of ${np.round(self.unconfirmed_service.get_estimated_profit(), 2)} before tax")
         self.lcd_arrival_time.display(self.unconfirmed_service.get_arrival_time())
         self.lcd_return_time.display(self.unconfirmed_service.get_return_time())
 
@@ -723,7 +731,8 @@ You can find out more about it at https://timetablesgame.nz"""
 
     def cmb_to_selection_changed(self, text):
         if text != "":  # while the updates occurs it sometimes trigger this with empty text.
-            self.fill_intermediate_towns(self.get_town_by_name(self.cmb_from.currentText()), self.get_town_by_name(text))
+            self.fill_intermediate_towns(self.get_town_by_name(self.cmb_from.currentText()),
+                                         self.get_town_by_name(text))
 
     def clicked_new_route(self, toggled):
         self.frm_new_route.setVisible(toggled)
@@ -838,7 +847,7 @@ You can find out more about it at https://timetablesgame.nz"""
                 self.map_image = None
         seat_numbers = service.number_seat_passengers_all_time
         seat_numbers_return = service.number_seat_passengers_all_time_return
-        date = [""]*len(service.time_service_was_run)
+        date = [""] * len(service.time_service_was_run)
         for i in range(len(date)):
             date[i] = service.time_service_was_run[i].strftime("%a %d %b '%y")
         profit = service.profit_all_time
@@ -853,12 +862,12 @@ You can find out more about it at https://timetablesgame.nz"""
         information += f"Ticket prices: ${service.fares[0]} for seat, ${service.fares[1]} for sleepers\n"
         list_times = ""
         for i, time in enumerate(service.departure_times):
-            if i == len(service.departure_times)-1:
+            if i == len(service.departure_times) - 1:
                 list_times += time.strftime("%H:%M")
             else:
                 list_times += time.strftime("%H:%M") + ", "
         information += f"Departs {service.stations[0].get_name()} at {list_times}\n"
-        s = service.get_journey_length(0, len(service.stations)-1).total_seconds()
+        s = service.get_journey_length(0, len(service.stations) - 1).total_seconds()
         hours, remainder = divmod(s, 3600)
         minutes, seconds = divmod(remainder, 60)
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -876,7 +885,7 @@ You can find out more about it at https://timetablesgame.nz"""
                     break
                 runs_on_days_text += day + ", "
         information += f"Train runs on {runs_on_days_text}\n"
-        information += f"Arrives at {service.stations[len(service.stations)-1].get_name()} after {hours} hrs, {minutes} mins\n"
+        information += f"Arrives at {service.stations[len(service.stations) - 1].get_name()} after {hours} hrs, {minutes} mins\n"
         stops = ""
         for i, station in enumerate(service.stations):
             if i == len(service.stations) - 1:
@@ -891,7 +900,8 @@ You can find out more about it at https://timetablesgame.nz"""
         lbl_info = QtWidgets.QLabel(information)
         if len(seat_numbers) == 0:
             self.gr_left.addWidget(lbl_title, 0, 0)
-            lbl_404 = QtWidgets.QLabel("404.\nNot found :(\n\nMaybe the train hasn't made its first journey yet?\n\nTrains only run at their scheduled time. Check the game is not paused \nand wait for the game time to reach the next scheduled time.")
+            lbl_404 = QtWidgets.QLabel(
+                "404.\nNot found :(\n\nMaybe the train hasn't made its first journey yet?\n\nTrains only run at their scheduled time. Check the game is not paused \nand wait for the game time to reach the next scheduled time.")
             lbl_404.setFont(QtGui.QFont(self.message_font, 14))
             self.gr_left.addWidget(lbl_404, 1, 0)
             close = QtWidgets.QPushButton("Close")
@@ -901,7 +911,7 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
         self.gr_left.addWidget(lbl_info, 1, 0, 1, 2)
         lbl_passengers_all_time = QtWidgets.QLabel()
-        limit_passenger = (0, service.get_capacity()+10)
+        limit_passenger = (0, service.get_capacity() + 10)
         max_income = service.car_capacity['passenger car'] * service.config[1] * service.fares[0]
         max_income += service.car_capacity['sleeper car'] * service.config[2] * service.fares[1]
         max_income -= service.get_running_cost()
@@ -925,7 +935,9 @@ You can find out more about it at https://timetablesgame.nz"""
         self.gr_left.addWidget(lbl_dest, 4, 0)
         if service.returns:
             lbl_passengers_all_time_return = QtWidgets.QLabel()
-            lbl_passengers_all_time_return.setPixmap(self.plot_ridership(seat_numbers_return, sleep_numbers_return, date, title="Ridership of returning train", lims=limit_passenger))
+            lbl_passengers_all_time_return.setPixmap(
+                self.plot_ridership(seat_numbers_return, sleep_numbers_return, date,
+                                    title="Ridership of returning train", lims=limit_passenger))
             self.gr_left.addWidget(lbl_passengers_all_time_return, 3, 0)
             lbl_profit_return = QtWidgets.QLabel()
             lbl_profit_return.setPixmap(self.plot_profit(profit_return, date, lims=limit_money))
@@ -940,7 +952,8 @@ You can find out more about it at https://timetablesgame.nz"""
             for i in range(len(service.times_visited_destination_return)):
                 arrives += service.times_visited_destination_return[i]
                 departs += service.times_departed_from_destination_return[i]
-            lbl_dest_return.setPixmap(self.plot_destinations(dest_names_return, arrives, departs, title="Popularity of train stations (return trip)"))
+            lbl_dest_return.setPixmap(self.plot_destinations(dest_names_return, arrives, departs,
+                                                             title="Popularity of train stations (return trip)"))
             self.gr_left.addWidget(lbl_dest_return, 4, 1)
         close = QtWidgets.QPushButton("Close")
         close.clicked.connect(self.close_report)
@@ -990,7 +1003,7 @@ You can find out more about it at https://timetablesgame.nz"""
         :param widgets: the qtwidget representing that service in the list of services panel
         :return: None
         """
-        self.company_reputation -=1
+        self.company_reputation -= 1
         widgets[0].removeWidget(widgets[1])
         widgets[0].removeWidget(widgets[2])
         widgets[0].removeWidget(widgets[3])
@@ -1035,8 +1048,10 @@ You can find out more about it at https://timetablesgame.nz"""
         grscr_campaign_options.setAlignment(QtCore.Qt.AlignTop)
         cmb_campaign = QtWidgets.QComboBox()
         cmb_campaign.addItems(["Television Advertisement",
-                               "Radio Advertisement", "Print Media Advertisement", "Nostalgic New Zealand Railways poster"])
-        cmb_campaign.currentTextChanged.connect(lambda: self.marketing_select_campaign(cmb_campaign, grscr_campaign_options))
+                               "Radio Advertisement", "Print Media Advertisement",
+                               "Nostalgic New Zealand Railways poster"])
+        cmb_campaign.currentTextChanged.connect(
+            lambda: self.marketing_select_campaign(cmb_campaign, grscr_campaign_options))
         self.gr_left.addWidget(lbl_title, 0, 0, 1, 2)
         self.gr_left.addWidget(lbl1, 1, 0)
         self.gr_left.addWidget(cmb_campaign, 1, 1)
@@ -1074,14 +1089,16 @@ You can find out more about it at https://timetablesgame.nz"""
                     posters.append(name)
             cmb_poster = QtWidgets.QComboBox()
             cmb_poster.addItems(posters)
-            cmb_poster.setCurrentText("FranzJosef")  # This is the default entirely because I am writing this in Franz, and it is my personal favourite!
+            cmb_poster.setCurrentText(
+                "FranzJosef")  # This is the default entirely because I am writing this in Franz, and it is my personal favourite!
             lbl_select_poster = QtWidgets.QLabel("Select Poster:")
             lbl_poster_image = QtWidgets.QLabel("")
             lbl_description = QtWidgets.QLabel(f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']}")
             cmb_poster.currentTextChanged.connect(lambda: self.marketing_poster_selection_change(lbl_poster_image,
-                                                                                      os.path.join(path, cmb_poster.currentText()),
-                                                                                      lbl_description,
-                                                                                      f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']} \nPosters will be displayed in {poster_data[cmb_poster.currentText()]['putsPostersText']} \nCampaign cost: ${poster_data[cmb_poster.currentText()]['cost']}"))
+                                                                                                 os.path.join(path,
+                                                                                                              cmb_poster.currentText()),
+                                                                                                 lbl_description,
+                                                                                                 f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']} \nPosters will be displayed in {poster_data[cmb_poster.currentText()]['putsPostersText']} \nCampaign cost: ${poster_data[cmb_poster.currentText()]['cost']}"))
             self.marketing_poster_selection_change(lbl_poster_image, os.path.join(path, cmb_poster.currentText()),
                                                    lbl_description,
                                                    f"Promotes Travel to: {poster_data[cmb_poster.currentText()]['target']} \nPosters will be displayed in {poster_data[cmb_poster.currentText()]['putsPostersText']} \nCampaign cost: ${poster_data[cmb_poster.currentText()]['cost']}")
@@ -1226,7 +1243,8 @@ You can find out more about it at https://timetablesgame.nz"""
             puts_posters = info['posterData'][selection]['putsPosters']
             promo = promotions.Promotion(self.img_map)
             if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - Poster"):
-                response = promo.add_poster_promotion(target_town, puts_posters, self.img_map.get_time(), self.services[:len(self.services)-1])
+                response = promo.add_poster_promotion(target_town, puts_posters, self.img_map.get_time(),
+                                                      self.services[:len(self.services) - 1])
                 self.close_report()
                 if response[0] == "C":
                     self.wallet.addsubtract(cost, self.img_map.get_time().strftime("%d-%m-%y"), "Ad Campaign refund")
@@ -1238,9 +1256,11 @@ You can find out more about it at https://timetablesgame.nz"""
                 cost = 10000
             else:
                 cost = 60000
-            if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - Print media"):
+            if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"),
+                                       "Buy Ad Campaign - Print media"):
                 promo = promotions.Promotion(self.img_map)
-                promo.add_print_media(info['cmb_service_2_promote'].currentText(), self.img_map.get_time(), self.services[:len(self.services)-1], info['ck_target_location'].isChecked())
+                promo.add_print_media(info['cmb_service_2_promote'].currentText(), self.img_map.get_time(),
+                                      self.services[:len(self.services) - 1], info['ck_target_location'].isChecked())
                 self.close_report()
             else:
                 self.show_caution("Not enough money")
@@ -1286,11 +1306,10 @@ You can find out more about it at https://timetablesgame.nz"""
             if self.wallet.addsubtract(-cost, self.img_map.get_time().strftime("%d-%m-%y"), "Buy Ad Campaign - TV"):
                 promo = promotions.Promotion(self.img_map)
                 promo.add_tv_ad(info['cmb_service'].currentText(), self.img_map.get_time(),
-                                      self.services[:len(self.services) - 1], times)
+                                self.services[:len(self.services) - 1], times)
                 self.close_report()
             else:
                 self.show_caution("Not enough money")
-
 
     def update_services_panel(self, service):
         """
@@ -1311,13 +1330,14 @@ You can find out more about it at https://timetablesgame.nz"""
         btn_promote = QtWidgets.QPushButton("Promote")
         btn_promote.clicked.connect(lambda: self.marketing(service))
         service_remove = QtWidgets.QPushButton("Delete")
-        service_remove.clicked.connect(lambda: self.delete_service(service, [gr_service_panel, service_panel, service_report, service_remove]))
+        service_remove.clicked.connect(
+            lambda: self.delete_service(service, [gr_service_panel, service_panel, service_report, service_remove]))
         gr_service_panel.addWidget(service_panel, len(self.services), 0)
         gr_service_panel.addWidget(service_report, len(self.services), 1)
         gr_service_panel.addWidget(btn_promote, len(self.services), 2)
         gr_service_panel.addWidget(service_remove, len(self.services), 3)
         service_panel.show()
-        for i in range(len(self.services)-1):
+        for i in range(len(self.services) - 1):
             terminal_stations = self.services[i].get_terminal_stations()
             times_at_terminal_stations = self.services[i].get_terminal_station_times()
             if service.is_connecting(terminal_stations, times_at_terminal_stations):
@@ -1330,7 +1350,8 @@ You can find out more about it at https://timetablesgame.nz"""
         self.company_reputation += random.randint(0, 2)
         name = self.txt_service_name.text()
         self.update_unconfirmed_service()
-        response = self.unconfirmed_service.confirm_service(name, self.wallet, self.img_map.get_time().strftime("%d/%m/%y"))
+        response = self.unconfirmed_service.confirm_service(name, self.wallet,
+                                                            self.img_map.get_time().strftime("%d/%m/%y"))
         if response[0] == "C":
             self.show_caution(response)
         else:
@@ -1345,6 +1366,7 @@ You can find out more about it at https://timetablesgame.nz"""
             self.services.append(self.unconfirmed_service)
             self.btn_new_route.setChecked(False)
             self.clicked_new_route(False)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

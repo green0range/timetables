@@ -1,6 +1,6 @@
 import os
 import random
-from PyQt5.QtMultimedia import QSound
+from PyQt5 import QtMultimedia
 from pydub import AudioSegment
 import json
 
@@ -14,21 +14,33 @@ class Music:
 
             Songs are packaged as mp3 because the file size is smaller, they are converted to wav so that they can
             be played by QT."""
-        music_dir = os.path.join("assets", "music")
-        with open(os.path.join(music_dir, "music_data.json"), encoding="utf-8") as f:
-            self.music = json.load(f)
-        for key in self.music:
-            if key != "enable_music":
-                self.music[key]["path"] = os.path.join(music_dir, key)
-                if not os.path.exists(self.music[key]["path"] + ".wav"):
-                    sound = AudioSegment.from_mp3(self.music[key]["path"] + ".mp3")
-                    sound.export(self.music[key]["path"] + ".wav", format="wav")
-                self.music[key]["QSound"] = QSound(self.music[key]["path"] + ".wav")
         self.mood = "happy"
         self.playing = False
         self.playlist = []
         self.playlist_position = None
         self.mood_changed = False
+        music_dir = os.path.join("assets", "music")
+        with open(os.path.join(music_dir, "music_data.json"), encoding="utf-8") as f:
+            self.music = json.load(f)
+        if not self.music['enable_music']:
+            return  # issue #13 workaround, disable mp3 conversion
+        for key in self.music:
+            if key != "enable_music":
+                self.music[key]["path"] = os.path.join(music_dir, key)
+                if not os.path.exists(self.music[key]["path"] + ".wav"):
+                    if not os.path.exists(self.music[key]["path"] + ".mp3"):
+                        print("Missing file, or incorrect name: " + self.music[key]["path"] + ".mp3")
+                        print("Music will be disabled")
+                        self.music["enable_music"] = False
+                    else:
+                        print("Converting mp3 file to wav... " + self.music[key]["path"] + ".mp3")
+                        sound = AudioSegment.from_mp3(self.music[key]["path"] + ".mp3")
+                        sound.export(self.music[key]["path"] + ".wav", format="wav")
+                        print("done")
+                if os.path.exists(self.music[key]["path"] + ".wav"):
+                    self.music[key]["QSound"] = QtMultimedia.QSound(self.music[key]["path"] + ".wav")
+                else:
+                    del self.music[key]
 
     def change_mood(self, new_mood):
         if new_mood != self.mood:
